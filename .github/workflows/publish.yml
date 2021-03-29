@@ -13,5 +13,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Get dependencies
+        run: mix deps.get
+
       - name: Publish to hex
         run: mix hex.publish --yes --organization supabase
