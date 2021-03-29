@@ -10,9 +10,9 @@ defmodule Workflows.Command do
           | :start_parallel
 
   @type t :: %__MODULE__{
-               command: command(),
-               scope: Execution.scope(),
-             }
+          command: command(),
+          scope: Execution.scope()
+        }
 
   defstruct [:command, :scope]
 
@@ -20,7 +20,7 @@ defmodule Workflows.Command do
   def create(command, scope) do
     %__MODULE__{
       command: command,
-      scope: scope,
+      scope: scope
     }
   end
 
@@ -38,5 +38,4 @@ defmodule Workflows.Command do
   def start_parallel() do
     create(:start_parallel, [])
   end
-
 end

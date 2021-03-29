@@ -3,17 +3,22 @@ defmodule Workflows.State do
 
   alias Workflows.Activity
 
+  # Activity finished and ready to transition
   @type status ::
-          {:transition_to, Activity.name()} # Activity finished and ready to transition
-          | {:completed, Activity.name()} # Activity completed, need to exit
-          | {:running, Activity.name()} # Activity is running
-          | :succeeded # Activity succeeded, terminal
-          | :failed # Activity failed, terminal
+          {:transition_to, Activity.name()}
+          # Activity completed, need to exit
+          | {:completed, Activity.name()}
+          # Activity is running
+          | {:running, Activity.name()}
+          # Activity succeeded, terminal
+          | :succeeded
+          # Activity failed, terminal
+          | :failed
 
   @type t :: %__MODULE__{
-               status: status(),
-               args: Activity.args(),
-             }
+          status: status(),
+          args: Activity.args()
+        }
 
   defstruct [:status, :args]
 
@@ -21,7 +26,7 @@ defmodule Workflows.State do
   def create(status, args) do
     %__MODULE__{
       status: status,
-      args: args,
+      args: args
     }
   end
 
@@ -44,5 +49,4 @@ defmodule Workflows.State do
   def succeeded(args) do
     create(:succeeded, args)
   end
-
 end

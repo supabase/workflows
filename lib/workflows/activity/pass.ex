@@ -11,35 +11,37 @@ defmodule Workflows.Activity.Pass do
   @behaviour Activity
 
   @type t :: %__MODULE__{
-               name: Activity.name(),
-               result: Activity.args(),
-               transition: Activity.transition(),
-               input_path: Path.t() | nil,
-               output_path: Path.t() | nil,
-               result_path: ReferencePath.t() | nil,
-               parameters: PayloadTemplate.t() | nil
-             }
+          name: Activity.name(),
+          result: Activity.args(),
+          transition: Activity.transition(),
+          input_path: Path.t() | nil,
+          output_path: Path.t() | nil,
+          result_path: ReferencePath.t() | nil,
+          parameters: PayloadTemplate.t() | nil
+        }
 
   defstruct [:name, :result, :transition, :input_path, :output_path, :result_path, :parameters]
 
   @impl Activity
   def parse(state_name, definition) do
     result = parse_result(definition)
+
     with {:ok, transition} <- ActivityUtil.parse_transition(definition),
          {:ok, input_path} <- ActivityUtil.parse_input_path(definition),
          {:ok, output_path} <- ActivityUtil.parse_output_path(definition),
          {:ok, result_path} <- ActivityUtil.parse_result_path(definition),
          {:ok, parameters} <- ActivityUtil.parse_parameters(definition) do
-       state = %__MODULE__{
-         name: state_name,
-         result: result,
-         transition: transition,
-         input_path: input_path,
-         output_path: output_path,
-         result_path: result_path,
-         parameters: parameters
-       }
-       {:ok, state}
+      state = %__MODULE__{
+        name: state_name,
+        result: result,
+        transition: transition,
+        input_path: input_path,
+        output_path: output_path,
+        result_path: result_path,
+        parameters: parameters
+      }
+
+      {:ok, state}
     end
   end
 

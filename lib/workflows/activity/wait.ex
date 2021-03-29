@@ -16,12 +16,12 @@ defmodule Workflows.Activity.Wait do
           | {:timestamp_path, Path.t()}
 
   @type t :: %__MODULE__{
-               name: Activity.name(),
-               wait: wait(),
-               transition: Activity.transition(),
-               input_path: Path.t() | nil,
-               output_path: Path.t() | nil,
-             }
+          name: Activity.name(),
+          wait: wait(),
+          transition: Activity.transition(),
+          input_path: Path.t() | nil,
+          output_path: Path.t() | nil
+        }
 
   @seconds "Seconds"
   @seconds_path "SecondsPath"
@@ -43,6 +43,7 @@ defmodule Workflows.Activity.Wait do
         input_path: input_path,
         output_path: output_path
       }
+
       {:ok, state}
     end
   end
@@ -51,13 +52,16 @@ defmodule Workflows.Activity.Wait do
   def enter(activity, _ctx, args) do
     events = [
       Event.create({:wait_entered, args}, []),
-      Event.create({:wait_started, activity.wait}, []), # TODO: resolve wait
+      # TODO: resolve wait
+      Event.create({:wait_started, activity.wait}, [])
     ]
+
     {:ok, events}
   end
 
   @impl Activity
-  def exit(_activity, _ctx, _args, result), do: {:ok, [Event.create({:succeed_exited, result}, [])]}
+  def exit(_activity, _ctx, _args, result),
+    do: {:ok, [Event.create({:succeed_exited, result}, [])]}
 
   ## Private
 
@@ -100,6 +104,7 @@ defmodule Workflows.Activity.Wait do
     if state_has_keys(state, other_keys) do
       {:error, :invalid_fields}
     end
+
     :ok
   end
 

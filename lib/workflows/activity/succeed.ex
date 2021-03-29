@@ -9,10 +9,10 @@ defmodule Workflows.Activity.Succeed do
   @behaviour Activity
 
   @type t :: %__MODULE__{
-               name: Activity.name(),
-               input_path: Path.t() | nil,
-               output_path: Path.t() | nil,
-             }
+          name: Activity.name(),
+          input_path: Path.t() | nil,
+          output_path: Path.t() | nil
+        }
 
   defstruct [:name, :input_path, :output_path]
 
@@ -25,6 +25,7 @@ defmodule Workflows.Activity.Succeed do
         input_path: input_path,
         output_path: output_path
       }
+
       {:ok, state}
     end
   end
@@ -33,6 +34,6 @@ defmodule Workflows.Activity.Succeed do
   def enter(_activity, _ctx, args), do: {:ok, [Event.create({:succeed_entered, args}, [])]}
 
   @impl Activity
-  def exit(_activity, _ctx, _args, result), do: {:ok, [Event.create({:succeed_exited, result}, [])]}
-
+  def exit(_activity, _ctx, _args, result),
+    do: {:ok, [Event.create({:succeed_exited, result}, [])]}
 end

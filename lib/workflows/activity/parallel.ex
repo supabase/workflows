@@ -14,17 +14,17 @@ defmodule Workflows.Activity.Parallel do
   @behaviour Activity
 
   @type t :: %__MODULE__{
-               name: Activity.name(),
-               branches: nonempty_list(Workflow.t()),
-               transition: Activity.transition(),
-               input_path: Path.t() | nil,
-               output_path: Path.t() | nil,
-               result_path: ReferencePath.t() | nil,
-               parameters: PayloadTemplate.t() | nil,
-               result_selector: PayloadTemplate.t() | nil,
-               retry: list(Retrier.t()),
-               catch: list(Catcher.t()),
-             }
+          name: Activity.name(),
+          branches: nonempty_list(Workflow.t()),
+          transition: Activity.transition(),
+          input_path: Path.t() | nil,
+          output_path: Path.t() | nil,
+          result_path: ReferencePath.t() | nil,
+          parameters: PayloadTemplate.t() | nil,
+          result_selector: PayloadTemplate.t() | nil,
+          retry: list(Retrier.t()),
+          catch: list(Catcher.t())
+        }
 
   defstruct [
     :name,
@@ -50,19 +50,20 @@ defmodule Workflows.Activity.Parallel do
          {:ok, result_selector} <- ActivityUtil.parse_result_selector(definition),
          {:ok, retry} <- ActivityUtil.parse_retry(definition),
          {:ok, catch_} <- ActivityUtil.parse_catch(definition) do
-       state = %__MODULE__{
-         name: state_name,
-         branches: branches,
-         transition: transition,
-         input_path: input_path,
-         output_path: output_path,
-         result_path: result_path,
-         parameters: parameters,
-         result_selector: result_selector,
-         retry: retry,
-         catch: catch_,
-       }
-       {:ok, state}
+      state = %__MODULE__{
+        name: state_name,
+        branches: branches,
+        transition: transition,
+        input_path: input_path,
+        output_path: output_path,
+        result_path: result_path,
+        parameters: parameters,
+        result_selector: result_selector,
+        retry: retry,
+        catch: catch_
+      }
+
+      {:ok, state}
     end
   end
 
@@ -70,8 +71,9 @@ defmodule Workflows.Activity.Parallel do
   def enter(_activity, _ctx, args) do
     events = [
       Event.create({:parallel_entered, args}, []),
-      Event.create(:parallel_scheduled, []),
+      Event.create(:parallel_scheduled, [])
     ]
+
     {:ok, events}
   end
 
@@ -79,8 +81,9 @@ defmodule Workflows.Activity.Parallel do
   def exit(_activity, _ctx, _args, result) do
     events = [
       Event.create(:parallel_succeeded, []),
-      Event.create({:parallel_exited, result}, []),
+      Event.create({:parallel_exited, result}, [])
     ]
+
     {:ok, events}
   end
 

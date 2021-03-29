@@ -7,7 +7,7 @@ defmodule WorkflowsTest do
   alias Workflows.Workflow
 
   @ctx %{
-    "environment" => "development",
+    "environment" => "development"
   }
 
   @simple_workflow %{
@@ -23,26 +23,27 @@ defmodule WorkflowsTest do
     }
   }
 
-    @simple_wait_workflow %{
-      "StartAt" => "S1",
-      "States" => %{
-        "S1" => %{
-          "Type" => "Wait",
-          "SecondsPath" => "$.duration",
-          "Next" => "S2"
-        },
-        "S2" => %{
-          "Type" => "Succeed"
-        }
+  @simple_wait_workflow %{
+    "StartAt" => "S1",
+    "States" => %{
+      "S1" => %{
+        "Type" => "Wait",
+        "SecondsPath" => "$.duration",
+        "Next" => "S2"
+      },
+      "S2" => %{
+        "Type" => "Succeed"
       }
     }
+  }
 
-    @simple_parallel_workflow %{
-      "StartAt" => "S1",
-      "States" => %{
-        "S1" => %{
-          "Type" => "Parallel",
-          "Branches" => [%{
+  @simple_parallel_workflow %{
+    "StartAt" => "S1",
+    "States" => %{
+      "S1" => %{
+        "Type" => "Parallel",
+        "Branches" => [
+          %{
             "StartAt" => "A1",
             "States" => %{
               "A1" => %{
@@ -50,21 +51,23 @@ defmodule WorkflowsTest do
                 "End" => true
               }
             }
-          }, %{
+          },
+          %{
             "StartAt" => "B1",
             "States" => %{
               "B1" => %{
                 "Type" => "Succeed"
               }
             }
-          }],
-          "Next" => "S2"
-        },
-        "S2" => %{
-          "Type" => "Succeed"
-        }
+          }
+        ],
+        "Next" => "S2"
+      },
+      "S2" => %{
+        "Type" => "Succeed"
       }
     }
+  }
 
   test "simple workflow" do
     {:ok, wf} = Workflow.parse(@simple_workflow)
@@ -89,5 +92,4 @@ defmodule WorkflowsTest do
     start_parallel = Command.start_parallel()
     {:ok, _new_exec, _new_events} = Execution.execute(exec, start_parallel)
   end
-
 end

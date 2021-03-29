@@ -5,9 +5,9 @@ defmodule Workflows.Workflow do
 
   @type activities :: %{Activity.name() => Activity.t()}
   @type t :: %__MODULE__{
-               start_at: Activity.name(),
-               activities: activities()
-             }
+          start_at: Activity.name(),
+          activities: activities()
+        }
 
   defstruct [:activities, :start_at]
 
@@ -27,7 +27,7 @@ defmodule Workflows.Workflow do
   ## Private
 
   defp do_parse(%{"StartAt" => start_at, "States" => states}) do
-    with {:ok, states} = parse_states(Map.to_list(states), []) do
+    with {:ok, states} <- parse_states(Map.to_list(states), []) do
       {:ok, create(start_at, states)}
     end
   end
@@ -37,9 +37,8 @@ defmodule Workflows.Workflow do
   defp parse_states([], acc), do: {:ok, Enum.into(acc, %{})}
 
   defp parse_states([{state_name, state_def} | states], acc) do
-    with {:ok, state} = Activity.parse(state_name, state_def) do
+    with {:ok, state} <- Activity.parse(state_name, state_def) do
       parse_states(states, [{state_name, state} | acc])
     end
   end
-
 end

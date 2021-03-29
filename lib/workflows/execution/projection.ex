@@ -61,11 +61,14 @@ defmodule Workflows.Execution.Projection do
     case state.status do
       {:completed, activity_name} ->
         activity = workflow.activities[activity_name]
+
         case activity.transition do
           :end -> {:ok, State.succeeded(args)}
           {:next, next_activity} -> {:ok, State.transition_to(next_activity, args)}
         end
-      _ -> {:error, :invalid_event}
+
+      _ ->
+        {:error, :invalid_event}
     end
   end
 
@@ -80,7 +83,9 @@ defmodule Workflows.Execution.Projection do
     case state.status do
       {:completed, _activity_name} ->
         {:ok, State.succeeded(args)}
-      _ -> {:error, :invalid_event}
+
+      _ ->
+        {:error, :invalid_event}
     end
   end
 
@@ -95,7 +100,9 @@ defmodule Workflows.Execution.Projection do
     case state.status do
       {:running, _} ->
         {:ok, state}
-      _ -> {:error, :invalid_event}
+
+      _ ->
+        {:error, :invalid_event}
     end
   end
 
@@ -103,7 +110,9 @@ defmodule Workflows.Execution.Projection do
     case state.status do
       {:running, activity_name} ->
         {:ok, State.completed(activity_name, state.args)}
-      _ -> {:error, :invalid_event}
+
+      _ ->
+        {:error, :invalid_event}
     end
   end
 
@@ -111,8 +120,9 @@ defmodule Workflows.Execution.Projection do
     case state.status do
       {:running, _activity_name} ->
         {:ok, State.succeeded(args)}
-      _ -> {:error, :invalid_event}
+
+      _ ->
+        {:error, :invalid_event}
     end
   end
-
 end

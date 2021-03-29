@@ -39,7 +39,7 @@ defmodule Workflows.Retrier do
   def next(retrier), do: {:max_attempts, retrier}
 
   defp do_create([], _interval_seconds, _max_attempts, _backoff_rate),
-       do: {:error, "ErrorEquals must be non empty"}
+    do: {:error, "ErrorEquals must be non empty"}
 
   defp do_create(_errors, interval_seconds, _max_attempts, _backoff_rate)
        when not is_integer(interval_seconds)
@@ -63,7 +63,7 @@ defmodule Workflows.Retrier do
       backoff_rate: backoff_rate,
       attempt: 0
     }
+
     {:ok, retrier}
   end
-
 end

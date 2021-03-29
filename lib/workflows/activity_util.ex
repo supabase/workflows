@@ -102,5 +102,4 @@ defmodule Workflows.ActivityUtil do
   defp do_parse_catch([], acc) do
     {:ok, Enum.reverse(acc)}
   end
-
 end

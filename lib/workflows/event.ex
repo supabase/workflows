@@ -55,28 +55,24 @@ defmodule Workflows.Event do
 
   @type event ::
           {:execution_started, Activity.args()}
-
           | {:parallel_entered, Activity.args()}
           | :parallel_scheduled
           | :parallel_started
           | :parallel_succeeded
           | {:parallel_exited, Activity.args()}
-
           | {:pass_entered, Activity.args()}
           | {:pass_exited, Activity.args()}
-
           | {:succeed_entered, Activity.args()}
           | {:succeed_exited, Activity.args()}
-
           | {:wait_entered, Activity.args()}
           | {:wait_exited, Activity.args()}
           | {:wait_started, Activity.Wait.wait()}
           | :wait_succeeded
 
   @type t :: %__MODULE__{
-               event: event(),
-               scope: Execution.scope(),
-             }
+          event: event(),
+          scope: Execution.scope()
+        }
 
   defstruct [:event, :scope]
 
@@ -84,7 +80,7 @@ defmodule Workflows.Event do
   def create(event, scope) do
     %__MODULE__{
       event: event,
-      scope: scope,
+      scope: scope
     }
   end
 
@@ -92,5 +88,4 @@ defmodule Workflows.Event do
   def execution_started(args) do
     create({:execution_started, args}, [])
   end
-
 end

@@ -9,10 +9,10 @@ defmodule Workflows.Execution do
   alias Workflows.Workflow
 
   @type t :: %__MODULE__{
-               workflow: Workflow.t(),
-               ctx: Activity.ctx(),
-               state: State.t() | nil,
-             }
+          workflow: Workflow.t(),
+          ctx: Activity.ctx(),
+          state: State.t() | nil
+        }
 
   @type scope_item :: {:branch, pos_integer()} | {:map_item, pos_integer()}
   @type scope :: list(scope())
@@ -24,7 +24,7 @@ defmodule Workflows.Execution do
     %__MODULE__{
       workflow: workflow,
       ctx: ctx,
-      state: state,
+      state: state
     }
   end
 
@@ -44,5 +44,4 @@ defmodule Workflows.Execution do
   def project(execution, events) do
     Execution.Projection.project(execution, events)
   end
-
 end

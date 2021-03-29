@@ -12,7 +12,7 @@ defmodule Workflows.Activity do
   @type t :: any()
 
   @callback parse(name(), map()) :: {:ok, t()} | {:error, term()}
-  @callback enter(t(), ctx(), args()) :: {:ok,list(Event.t())} | {:error, term()}
+  @callback enter(t(), ctx(), args()) :: {:ok, list(Event.t())} | {:error, term()}
   @callback exit(t(), ctx(), args(), args()) :: {:ok, list(Event.t())} | {:error, term()}
 
   @spec parse(name(), map()) :: {:ok, t()} | {:error, term()}
@@ -27,16 +27,16 @@ defmodule Workflows.Activity do
   ## Private
 
   defp do_parse(name, %{"Type" => "Parallel"} = state),
-      do: Activity.Parallel.parse(name, state)
+    do: Activity.Parallel.parse(name, state)
 
   defp do_parse(name, %{"Type" => "Pass"} = state),
-      do: Activity.Pass.parse(name, state)
+    do: Activity.Pass.parse(name, state)
 
   defp do_parse(name, %{"Type" => "Succeed"} = state),
-      do: Activity.Succeed.parse(name, state)
+    do: Activity.Succeed.parse(name, state)
 
   defp do_parse(name, %{"Type" => "Wait"} = state),
-      do: Activity.Wait.parse(name, state)
+    do: Activity.Wait.parse(name, state)
 
   defp do_parse(name, state) do
     {:error, :parse, name, state}
@@ -73,5 +73,4 @@ defmodule Workflows.Activity do
   defp do_exit(%Activity.Wait{} = activity, ctx, args, result) do
     Activity.Wait.exit(activity, ctx, args, result)
   end
-
 end
