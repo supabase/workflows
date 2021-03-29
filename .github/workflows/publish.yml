@@ -23,6 +23,6 @@ jobs:
         run: mix deps.get
 
       - name: Publish to hex
-        run: mix hex.publish --yes --organization supabase
+        run: mix hex.publish --yes
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
