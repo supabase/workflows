@@ -14,7 +14,7 @@ defmodule Workflows.MixProject do
       dialyzer: dialyzer(),
       description: description(),
       package: package(),
-      docs: docs(),
+      docs: docs()
     ]
   end
 
@@ -29,7 +29,7 @@ defmodule Workflows.MixProject do
     [
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 
@@ -64,5 +64,4 @@ defmodule Workflows.MixProject do
       extras: ["README.md", "CHANGELOG.md", "LICENSE"]
     ]
   end
-
 end
