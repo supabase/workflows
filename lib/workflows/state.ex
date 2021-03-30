@@ -9,7 +9,7 @@ defmodule Workflows.State do
           # Activity completed, need to exit
           | {:completed, Activity.name()}
           # Activity is running
-          | {:running, Activity.name()}
+          | {:running, Activity.name(), children :: list(status())}
           # Activity succeeded, terminal
           | :succeeded
           # Activity failed, terminal
@@ -42,7 +42,12 @@ defmodule Workflows.State do
 
   @spec running(Activity.name(), Activity.args()) :: t()
   def running(name, args) do
-    create({:running, name}, args)
+    running(name, [], args)
+  end
+
+  @spec running(Activity.name(), list(status()), Activity.args()) :: t()
+  def running(name, children, args) do
+    create({:running, name, children}, args)
   end
 
   @spec succeeded(Activity.args()) :: t()

@@ -22,7 +22,6 @@ defmodule Workflows.Event do
   * FailExited
 
   * ParallelEntered
-  * ParallelScheduled
   * ParallelStarted
   * ParallelFailed
   * ParallelSucceeded
@@ -55,10 +54,10 @@ defmodule Workflows.Event do
 
   @type event ::
           {:execution_started, Activity.args()}
+          | {:execution_succeeded, Activity.args()}
           | {:parallel_entered, Activity.args()}
-          | :parallel_scheduled
           | :parallel_started
-          | :parallel_succeeded
+          | {:parallel_succeeded, Activity.args()}
           | {:parallel_exited, Activity.args()}
           | {:pass_entered, Activity.args()}
           | {:pass_exited, Activity.args()}
@@ -84,8 +83,17 @@ defmodule Workflows.Event do
     }
   end
 
+  def with_scope(event, scope) do
+    %__MODULE__{event | scope: scope}
+  end
+
   @spec execution_started(Activity.args()) :: t()
   def execution_started(args) do
     create({:execution_started, args}, [])
+  end
+
+  @spec execution_succeeded(Activity.args()) :: t()
+  def execution_succeeded(args) do
+    create({:execution_succeeded, args}, [])
   end
 end

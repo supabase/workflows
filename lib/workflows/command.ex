@@ -7,7 +7,6 @@ defmodule Workflows.Command do
   @type command ::
           {:start_execution, Activity.args()}
           | :fire_timer
-          | :start_parallel
 
   @type t :: %__MODULE__{
           command: command(),
@@ -24,6 +23,10 @@ defmodule Workflows.Command do
     }
   end
 
+  def with_scope(command, scope) do
+    %__MODULE__{command | scope: scope}
+  end
+
   @spec start_execution(Activity.args()) :: t()
   def start_execution(args) do
     create({:start_execution, args}, [])
@@ -32,10 +35,5 @@ defmodule Workflows.Command do
   @spec fire_timer() :: t()
   def fire_timer() do
     create(:fire_timer, [])
-  end
-
-  @spec start_parallel() :: t()
-  def start_parallel() do
-    create(:start_parallel, [])
   end
 end

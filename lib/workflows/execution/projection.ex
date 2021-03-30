@@ -1,6 +1,7 @@
 defmodule Workflows.Execution.Projection do
   @moduledoc false
 
+  alias Workflows.Activity
   alias Workflows.Event
   alias Workflows.Execution
   alias Workflows.State
@@ -19,9 +20,41 @@ defmodule Workflows.Execution.Projection do
     end
   end
 
-  defp do_project_single(execution, event) do
+  defp do_project_single(execution, %Event{scope: []} = event) do
     with {:ok, new_state} <- do_project_single(execution.workflow, execution.state, event) do
       {:ok, %Execution{execution | state: new_state}}
+    end
+  end
+
+  defp do_project_single(execution, %Event{scope: [current_scope | scope]} = event) do
+    case execution.state.status do
+      {:running, activity_name, children_state} ->
+        activity = execution.workflow.activities[activity_name]
+
+        case {activity, current_scope} do
+          {%Activity.Parallel{}, {:branch, branch_idx}} ->
+            wf = Enum.at(activity.branches, branch_idx)
+            child_state = Enum.at(children_state, branch_idx)
+            child_exec = Execution.create(wf, execution.ctx, child_state)
+
+            with {:ok, new_child_exec} <-
+                   do_project_single(child_exec, event |> Event.with_scope(scope)) do
+              new_children_state =
+                children_state
+                |> List.replace_at(branch_idx, new_child_exec.state)
+
+              new_parent_state =
+                State.running(activity_name, new_children_state, execution.state.args)
+
+              {:ok, %Execution{execution | state: new_parent_state}}
+            end
+
+          _ ->
+            {:error, :invalid_scope}
+        end
+
+      state ->
+        {:error, :todo, state}
     end
   end
 
@@ -36,17 +69,41 @@ defmodule Workflows.Execution.Projection do
     end
   end
 
-  defp do_project_single(_workflow, state, %Event{event: :parallel_scheduled}) do
+  defp do_project_single(workflow, state, %Event{event: :parallel_started}) do
     case state.status do
-      {:running, activity_name} -> {:ok, State.running(activity_name, state.args)}
-      _ -> {:error, :invalid_event}
+      {:running, activity_name, []} ->
+        activity = workflow.activities[activity_name]
+
+        children =
+          activity.branches
+          |> Enum.map(fn branch ->
+            State.transition_to(branch.start_at, state.args)
+          end)
+
+        {:ok, State.running(activity_name, children, state.args)}
+
+      _ ->
+        {:error, :invalid_event}
     end
   end
 
-  defp do_project_single(_workflow, state, %Event{event: :parallel_started}) do
+  defp do_project_single(_workflow, state, %Event{event: {:parallel_succeeded, result}}) do
     case state.status do
-      {:running, activity_name} -> {:ok, State.running(activity_name, state.args)}
-      _ -> {:error, :invalid_event}
+      {:running, activity_name, _} ->
+        {:ok, State.completed(activity_name, result)}
+
+      _ ->
+        {:error, :invalid_event}
+    end
+  end
+
+  defp do_project_single(_workflow, state, %Event{event: {:parallel_exited, args}}) do
+    case state.status do
+      {:completed, _} ->
+        {:ok, State.succeeded(args)}
+
+      _ ->
+        {:error, :invalid_event}
     end
   end
 
@@ -98,7 +155,7 @@ defmodule Workflows.Execution.Projection do
 
   defp do_project_single(_workflow, state, %Event{event: {:wait_started, _duration}}) do
     case state.status do
-      {:running, _} ->
+      {:running, _, []} ->
         {:ok, state}
 
       _ ->
@@ -108,7 +165,7 @@ defmodule Workflows.Execution.Projection do
 
   defp do_project_single(_workflow, state, %Event{event: :wait_succeeded}) do
     case state.status do
-      {:running, activity_name} ->
+      {:running, activity_name, []} ->
         {:ok, State.completed(activity_name, state.args)}
 
       _ ->
@@ -118,7 +175,7 @@ defmodule Workflows.Execution.Projection do
 
   defp do_project_single(_workflow, state, %Event{event: {:wait_exited, args}}) do
     case state.status do
-      {:running, _activity_name} ->
+      {:completed, _} ->
         {:ok, State.succeeded(args)}
 
       _ ->

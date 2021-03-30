@@ -71,7 +71,7 @@ defmodule Workflows.Activity.Parallel do
   def enter(_activity, _ctx, args) do
     events = [
       Event.create({:parallel_entered, args}, []),
-      Event.create(:parallel_scheduled, [])
+      Event.create(:parallel_started, [])
     ]
 
     {:ok, events}
@@ -80,7 +80,8 @@ defmodule Workflows.Activity.Parallel do
   @impl Activity
   def exit(_activity, _ctx, _args, result) do
     events = [
-      Event.create(:parallel_succeeded, []),
+      Event.create({:parallel_succeeded, result}, []),
+      # Result after transform
       Event.create({:parallel_exited, result}, [])
     ]
 
