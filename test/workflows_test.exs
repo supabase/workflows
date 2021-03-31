@@ -218,7 +218,6 @@ defmodule WorkflowsTest do
     assert length(result) == 2
   end
 
-  @tag :wip
   test "nested parallel workflow" do
     {:ok, wf} = Workflow.parse(@nested_parallel_workflows)
 

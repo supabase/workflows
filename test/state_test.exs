@@ -78,9 +78,9 @@ defmodule Workflows.StateTest do
 
   describe "Fail" do
     @activity %{
-    "Type" => "Fail",
-    "Error" => "CustomError",
-    "Cause" => "Failing"
+      "Type" => "Fail",
+      "Error" => "CustomError",
+      "Cause" => "Failing"
     }
 
     test "completes and fails without external commands" do

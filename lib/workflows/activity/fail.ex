@@ -8,10 +8,10 @@ defmodule Workflows.Activity.Fail do
   alias Workflows.ActivityUtil
 
   @type t :: %__MODULE__{
-               name: State.state_name(),
-               error: String.t(),
-               cause: String.t(),
-             }
+          name: State.state_name(),
+          error: String.t(),
+          cause: String.t()
+        }
 
   defstruct [:name, :error, :cause]
 
@@ -22,8 +22,9 @@ defmodule Workflows.Activity.Fail do
       state = %__MODULE__{
         name: state_name,
         error: error,
-        cause: cause,
+        cause: cause
       }
+
       {:ok, state}
     end
   end
@@ -42,10 +43,11 @@ defmodule Workflows.Activity.Fail do
   @impl Activity
   def exit(activity, _ctx, _args, result) do
     error = Error.create(activity.error, activity.cause)
+
     event = %Event.FailExited{
       activity: activity.name,
       scope: [],
-      error: error,
+      error: error
     }
 
     {:ok, event}
@@ -58,5 +60,4 @@ defmodule Workflows.Activity.Fail do
 
   defp parse_cause(%{"Cause" => cause}), do: {:ok, cause}
   defp parse_cause(_definition), do: {:error, :missing_cause}
-
 end

@@ -46,5 +46,4 @@ defmodule Workflows.State.Fail do
   defp do_project(_state, event) do
     {:error, :invalid_event, event}
   end
-
 end
