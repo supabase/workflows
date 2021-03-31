@@ -78,7 +78,11 @@ defmodule Workflows.State.Parallel do
     end
   end
 
-  defp do_project_this_scope(%State.Parallel{} = state, _activity, %Event.ParallelEntered{} = event) do
+  defp do_project_this_scope(
+         %State.Parallel{} = state,
+         _activity,
+         %Event.ParallelEntered{} = event
+       ) do
     case state.inner do
       {:before_enter, state_args} ->
         new_state = %State.Parallel{state | inner: {:starting, state_args, event.args}}
@@ -89,7 +93,11 @@ defmodule Workflows.State.Parallel do
     end
   end
 
-  defp do_project_this_scope(%State.Parallel{} = state, activity, %Event.ParallelStarted{} = event) do
+  defp do_project_this_scope(
+         %State.Parallel{} = state,
+         activity,
+         %Event.ParallelStarted{} = event
+       ) do
     case state.inner do
       {:starting, state_args, effective_args} ->
         with {:ok, children} = create_children_starting_state(activity.branches, effective_args) do
@@ -106,7 +114,11 @@ defmodule Workflows.State.Parallel do
     end
   end
 
-  defp do_project_this_scope(%State.Parallel{} = state, _activity, %Event.ParallelSucceeded{} = event) do
+  defp do_project_this_scope(
+         %State.Parallel{} = state,
+         _activity,
+         %Event.ParallelSucceeded{} = event
+       ) do
     case state.inner do
       {:running, state_args, _, _children} ->
         new_state = %State.Parallel{state | inner: {:parallel_finished, state_args, event.result}}
@@ -117,7 +129,11 @@ defmodule Workflows.State.Parallel do
     end
   end
 
-  defp do_project_this_scope(%State.Parallel{} = state, _activity, %Event.ParallelExited{} = event) do
+  defp do_project_this_scope(
+         %State.Parallel{} = state,
+         _activity,
+         %Event.ParallelExited{} = event
+       ) do
     case state.inner do
       {:parallel_finished, _state_args, _args} ->
         {:transition, event.transition, event.result}
