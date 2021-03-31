@@ -10,7 +10,7 @@ defmodule Workflows.ActivityUtil do
   ## Parse helpers
 
   def parse_transition(%{"Next" => _, "End" => _}) do
-    {:error, "Only one of Next or End can be present"}
+    {:error, :multiple_transition}
   end
 
   def parse_transition(%{"Next" => next}) do
@@ -22,7 +22,7 @@ defmodule Workflows.ActivityUtil do
   end
 
   def parse_transition(_state) do
-    {:error, "One of Next or End can be present"}
+    {:error, :missing_transition}
   end
 
   def parse_input_path(%{"InputPath" => path}) do

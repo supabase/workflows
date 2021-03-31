@@ -2,6 +2,8 @@ defmodule Workflows.Workflow do
   @moduledoc false
 
   alias Workflows.Activity
+  alias Workflows.Event
+  alias Workflows.State
 
   @type activities :: %{Activity.name() => Activity.t()}
   @type t :: %__MODULE__{
@@ -24,6 +26,36 @@ defmodule Workflows.Workflow do
     }
   end
 
+  @spec starting_activity(t()) :: {:ok, Activity.t()} | {:error, term()}
+  def starting_activity(workflow) do
+    activity(workflow, workflow.start_at)
+  end
+
+  @spec activity(t(), Activity.name()) :: {:ok, Activity.t()} | {:error, term()}
+  def activity(workflow, name) do
+    Map.fetch(workflow.activities, name)
+  end
+
+  def execute(workflow, state, ctx) do
+    with {:ok, current_activity} <- activity(workflow, state.activity) do
+      State.execute(state, current_activity, ctx)
+    end
+  end
+
+  def execute(workflow, state, ctx, cmd) do
+    with {:ok, current_activity} <- activity(workflow, state.activity) do
+      State.execute(state, current_activity, ctx, cmd)
+    end
+  end
+
+  def project(workflow, events) do
+    project(workflow, nil, events)
+  end
+
+  def project(workflow, state, events) do
+    do_project(workflow, state, events)
+  end
+
   ## Private
 
   defp do_parse(%{"StartAt" => start_at, "States" => states}) do
@@ -39,6 +71,45 @@ defmodule Workflows.Workflow do
   defp parse_states([{state_name, state_def} | states], acc) do
     with {:ok, state} <- Activity.parse(state_name, state_def) do
       parse_states(states, [{state_name, state} | acc])
+    end
+  end
+
+  defp do_project(workflow, state, []) do
+    {:continue, state}
+  end
+
+  defp do_project(workflow, nil, [%Event.ExecutionStarted{args: args} | events]) do
+    with {:ok, starting} <- starting_activity(workflow) do
+      state = State.create(starting, args)
+      project(workflow, state, events)
+    end
+  end
+
+  defp do_project(workflow, state, [event | events]) do
+    case do_project(workflow, state, event) do
+      {:continue, new_state} -> do_project(workflow, new_state, events)
+      {:succeed, result} -> {:succeed, result}
+    end
+  end
+
+  defp do_project(workflow, state, event) do
+    with {:ok, current_activity} <- activity(workflow, state.activity) do
+      case State.project(state, current_activity, event) do
+        {:stay, new_state} ->
+          {:continue, new_state}
+
+        {:transition, {:next, activity_name}, args} ->
+          with {:ok, new_activity} <- activity(workflow, activity_name) do
+            new_state = State.create(new_activity, args)
+            {:continue, new_state}
+          end
+
+        {:transition, :end, result} ->
+          {:succeed, result}
+
+        {:succeed, result} ->
+          {:succeed, result}
+      end
     end
   end
 end

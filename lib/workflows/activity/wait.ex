@@ -50,18 +50,47 @@ defmodule Workflows.Activity.Wait do
 
   @impl Activity
   def enter(activity, _ctx, args) do
-    events = [
-      Event.create({:wait_entered, args}, []),
-      # TODO: resolve wait
-      Event.create({:wait_started, activity.wait}, [])
-    ]
+    event = %Event.WaitEntered{
+      activity: activity.name,
+      scope: [],
+      args: args
+    }
 
-    {:ok, events}
+    {:ok, event}
   end
 
   @impl Activity
-  def exit(_activity, _ctx, _args, result),
-    do: {:ok, [Event.create({:succeed_exited, result}, [])]}
+  def exit(activity, _ctx, _args, result) do
+    event = %Event.WaitExited{
+      activity: activity.name,
+      scope: [],
+      result: result,
+      transition: activity.transition
+    }
+
+    {:ok, event}
+  end
+
+  def start_wait(activity, _ctx, args) do
+    with {:ok, wait} <- resolve_wait(activity.wait, args) do
+      event = %Event.WaitStarted{
+        activity: activity.name,
+        scope: [],
+        wait: wait
+      }
+
+      {:ok, event}
+    end
+  end
+
+  def finish_waiting(activity, _ctx) do
+    event = %Event.WaitSucceeded{
+      activity: activity.name,
+      scope: []
+    }
+
+    {:ok, event}
+  end
 
   ## Private
 
@@ -111,4 +140,18 @@ defmodule Workflows.Activity.Wait do
   defp state_has_keys(state, keys) do
     Enum.any?(keys, fn key -> Map.has_key?(state, key) end)
   end
+
+  defp resolve_wait({:seconds_path, path}, args) do
+    with {:ok, seconds} <- ReferencePath.query(path, args) do
+      {:ok, {:seconds, seconds}}
+    end
+  end
+
+  defp resolve_wait({:timestamp_path, path}, args) do
+    with {:ok, timestamp} <- ReferencePath.query(path, args) do
+      {:ok, {:timestamp, timestamp}}
+    end
+  end
+
+  defp resolve_wait(wait, _args), do: {:ok, wait}
 end

@@ -29,7 +29,7 @@ defmodule WorkflowsTest do
     "States" => %{
       "S1" => %{
         "Type" => "Wait",
-        "SecondsPath" => "$.duration",
+        "Seconds" => 10,
         "Next" => "S2"
       },
       "S2" => %{
@@ -92,7 +92,7 @@ defmodule WorkflowsTest do
               "B1" => %{
                 "Type" => "Wait",
                 "Seconds" => 10,
-                "End" => true,
+                "End" => true
               }
             }
           }
@@ -161,58 +161,89 @@ defmodule WorkflowsTest do
   test "simple workflow" do
     {:ok, wf} = Workflow.parse(@simple_workflow)
 
-    {:ok, _exec, _events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:succeed, result, events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:succeed, result_replay} = Workflow.project(wf, events)
+
+    assert result == result_replay
   end
 
   test "simple wait workflow" do
     {:ok, wf} = Workflow.parse(@simple_wait_workflow)
 
-    {:ok, exec, _events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:continue, state, events} = Execution.start(wf, @ctx, %{"foo" => 42})
 
-    fire = Command.fire_timer()
-    {:ok, _new_exec, _new_events} = Execution.execute(exec, fire)
+    wait_started = List.last(events)
+    assert %Event.WaitStarted{} = wait_started
+
+    cmd = Command.finish_waiting(wait_started)
+    {:succeed, result, new_events} = Execution.resume(wf, state, @ctx, cmd)
+
+    {:succeed, result_replay} = Workflow.project(wf, events ++ new_events)
+    assert result == result_replay
   end
 
   test "simple parallel workflow" do
     {:ok, wf} = Workflow.parse(@simple_parallel_workflow)
 
-    {:ok, exec, _events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:succeed, result, events} = Execution.start(wf, @ctx, %{"foo" => 42})
 
-    assert exec.state.status == :succeeded
+    assert length(result) == 2
   end
 
   test "parallel workflow with wait inside" do
     {:ok, wf} = Workflow.parse(@parallel_workflow_with_wait)
 
-    {:ok, exec, events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:continue, state, events} = Execution.start(wf, @ctx, %{"foo" => 42})
 
-    wait_events =
+    wait_b1 =
       events
-      |> Enum.filter(fn
-        %Event{event: {:wait_started, _}} -> true
+      |> Enum.find(fn
+        %Event.WaitStarted{activity: "B1"} -> true
         _ -> false
       end)
 
-    wait_0 = Enum.at(wait_events, 0)
-    fire = Command.fire_timer() |> Command.with_scope(wait_0.scope)
-    {:ok, new_exec, _new_events} = Execution.execute(exec, fire)
+    wait_a1 =
+      events
+      |> Enum.find(fn
+        %Event.WaitStarted{activity: "A1"} -> true
+        _ -> false
+      end)
 
-    wait_1 = Enum.at(wait_events, 1)
-    fire = Command.fire_timer() |> Command.with_scope(wait_1.scope)
-    {:ok, new_exec, _new_events} = Execution.execute(new_exec, fire)
+    finish_b1 = Command.finish_waiting(wait_b1)
+    {:continue, state, events} = Execution.resume(wf, state, @ctx, finish_b1)
 
-    assert new_exec.state.status == :succeeded
+    finish_a1 = Command.finish_waiting(wait_a1)
+    {:succeed, result, events} = Execution.resume(wf, state, @ctx, finish_a1)
+
+    assert length(result) == 2
   end
 
-  @tag :skip
+  @tag :wip
   test "nested parallel workflow" do
     {:ok, wf} = Workflow.parse(@nested_parallel_workflows)
 
-    {:ok, exec, events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:continue, state, events} = Execution.start(wf, @ctx, %{"foo" => 42})
 
-    IO.inspect(exec)
-    IO.inspect(events)
+    wait_c1 =
+      events
+      |> Enum.find(fn
+        %Event.WaitStarted{activity: "C1"} -> true
+        _ -> false
+      end)
 
-    assert false
+    wait_a1 =
+      events
+      |> Enum.find(fn
+        %Event.WaitStarted{activity: "A1"} -> true
+        _ -> false
+      end)
+
+    finish_a1 = Command.finish_waiting(wait_a1)
+    {:continue, state, events} = Execution.resume(wf, state, @ctx, finish_a1)
+
+    finish_c1 = Command.finish_waiting(wait_c1)
+    {:succeed, result, events} = Execution.resume(wf, state, @ctx, finish_c1)
+
+    assert [[_], _] = result
   end
 end

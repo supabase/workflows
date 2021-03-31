@@ -2,56 +2,44 @@ defmodule Workflows.State do
   @moduledoc false
 
   alias Workflows.Activity
+  alias Workflows.Event
+  alias Workflows.StateUtil
 
-  # Activity finished and ready to transition
-  @type status ::
-          {:transition_to, Activity.name()}
-          # Activity completed, need to exit
-          | {:completed, Activity.name()}
-          # Activity is running
-          | {:running, Activity.name(), children :: list(status())}
-          # Activity succeeded, terminal
-          | :succeeded
-          # Activity failed, terminal
-          | :failed
+  @opaque t :: any()
 
-  @type t :: %__MODULE__{
-          status: status(),
-          args: Activity.args()
+  @callback project(state :: t(), event :: Event.t()) ::
+              {:stay, state :: t()} | {:transition, Activity.name(), Activity.args()}
+
+  def create(activity, args) do
+    StateUtil.create(activity, args)
+  end
+
+  def execute(state, activity, ctx) do
+    StateUtil.execute(state, activity, ctx)
+  end
+
+  def execute(state, activity, ctx, cmd) do
+    StateUtil.execute(state, activity, ctx, cmd)
+  end
+
+  def project(state, activity, event) do
+    StateUtil.project(state, activity, event)
+  end
+
+  defmacro __using__(_opts) do
+    quote location: :keep do
+      defstruct [:activity, :inner]
+
+      alias Workflows.State
+
+      @behaviour State
+
+      def create(activity, state_args) do
+        %__MODULE__{
+          activity: activity.name,
+          inner: {:before_enter, state_args}
         }
-
-  defstruct [:status, :args]
-
-  @spec create(status(), Activity.args()) :: t()
-  def create(status, args) do
-    %__MODULE__{
-      status: status,
-      args: args
-    }
-  end
-
-  @spec transition_to(Activity.name(), Activity.args()) :: t()
-  def transition_to(name, args) do
-    create({:transition_to, name}, args)
-  end
-
-  @spec completed(Activity.name(), Activity.args()) :: t()
-  def completed(name, args) do
-    create({:completed, name}, args)
-  end
-
-  @spec running(Activity.name(), Activity.args()) :: t()
-  def running(name, args) do
-    running(name, [], args)
-  end
-
-  @spec running(Activity.name(), list(status()), Activity.args()) :: t()
-  def running(name, children, args) do
-    create({:running, name, children}, args)
-  end
-
-  @spec succeeded(Activity.args()) :: t()
-  def succeeded(args) do
-    create(:succeeded, args)
+      end
+    end
   end
 end

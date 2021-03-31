@@ -52,21 +52,7 @@ defmodule Workflows.Event do
   alias Workflows.Activity
   alias Workflows.Execution
 
-  @type event ::
-          {:execution_started, Activity.args()}
-          | {:execution_succeeded, Activity.args()}
-          | {:parallel_entered, Activity.args()}
-          | :parallel_started
-          | {:parallel_succeeded, Activity.args()}
-          | {:parallel_exited, Activity.args()}
-          | {:pass_entered, Activity.args()}
-          | {:pass_exited, Activity.args()}
-          | {:succeed_entered, Activity.args()}
-          | {:succeed_exited, Activity.args()}
-          | {:wait_entered, Activity.args()}
-          | {:wait_exited, Activity.args()}
-          | {:wait_started, Activity.Wait.wait()}
-          | :wait_succeeded
+  @type event :: any()
 
   @type t :: %__MODULE__{
           event: event(),
@@ -83,8 +69,15 @@ defmodule Workflows.Event do
     }
   end
 
-  def with_scope(event, scope) do
-    %__MODULE__{event | scope: scope}
+  def push_scope(event, scope) do
+    Map.update(event, :scope, [], fn existing_scope -> [scope | existing_scope] end)
+  end
+
+  def pop_scope(event) do
+    Map.get_and_update(event, :scope, fn
+      [] -> {nil, []}
+      [current | scope] -> {current, scope}
+    end)
   end
 
   @spec execution_started(Activity.args()) :: t()
