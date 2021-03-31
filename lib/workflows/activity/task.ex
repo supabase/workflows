@@ -120,7 +120,7 @@ defmodule Workflows.Activity.Task do
 
   defp parse_resource(%{"Resource" => resource}) do
     if resource == nil do
-      {:error, :resource_missing}
+      {:error, :missing_resource}
     else
       {:ok, resource}
     end

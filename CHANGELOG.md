@@ -4,7 +4,7 @@
 
 ### Added
 
-- Execute `Task`, `Parallel`, and `Choice` activities
+- Execute `Fail`, `Task`, `Parallel`, and `Choice` activities
 - New `Execute` module to run workflows until command is needed
 
 

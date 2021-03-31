@@ -29,6 +29,9 @@ defmodule Workflows.Activity do
   defp do_parse(name, %{"Type" => "Choice"} = state),
     do: Activity.Choice.parse(name, state)
 
+  defp do_parse(name, %{"Type" => "Fail"} = state),
+    do: Activity.Fail.parse(name, state)
+
   defp do_parse(name, %{"Type" => "Parallel"} = state),
     do: Activity.Parallel.parse(name, state)
 
@@ -54,6 +57,14 @@ defmodule Workflows.Activity do
 
   defp do_exit(%Activity.Choice{} = activity, ctx, args, result) do
     Activity.Choice.exit(activity, ctx, args, result)
+  end
+
+  defp do_enter(%Activity.Fail{} = activity, ctx, args) do
+    Activity.Fail.enter(activity, ctx, args)
+  end
+
+  defp do_exit(%Activity.Fail{} = activity, ctx, args, result) do
+    Activity.Fail.exit(activity, ctx, args, result)
   end
 
   defp do_enter(%Activity.Pass{} = activity, ctx, args) do

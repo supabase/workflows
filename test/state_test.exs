@@ -76,6 +76,28 @@ defmodule Workflows.StateTest do
     end
   end
 
+  describe "Fail" do
+    @activity %{
+    "Type" => "Fail",
+    "Error" => "CustomError",
+    "Cause" => "Failing"
+    }
+
+    test "completes and fails without external commands" do
+      {:ok, activity} = Activity.parse("Test", @activity)
+
+      state = State.Fail.create(activity, @args)
+
+      {:ok, started} = State.execute(state, activity, @ctx)
+      {:stay, new_state} = State.project(state, activity, started)
+      {:ok, ended} = State.execute(new_state, activity, @ctx)
+      {:fail, error} = State.project(new_state, activity, ended)
+
+      assert "CustomError" == error.name
+      assert "Failing" == error.cause
+    end
+  end
+
   describe "Parallel" do
     @activity %{
       "Type" => "Parallel",

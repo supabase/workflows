@@ -34,6 +34,18 @@ defmodule Workflows.StateUtil do
     State.Choice.project(state, activity, event)
   end
 
+  defp do_create(%Activity.Fail{} = activity, ctx) do
+    State.Fail.create(activity, ctx)
+  end
+
+  defp do_execute(%State.Fail{} = state, activity, ctx) do
+    State.Fail.execute(state, activity, ctx)
+  end
+
+  defp do_project(%State.Fail{} = state, activity, event) do
+    State.Fail.project(state, activity, event)
+  end
+
   defp do_create(%Activity.Pass{} = activity, ctx) do
     State.Pass.create(activity, ctx)
   end
