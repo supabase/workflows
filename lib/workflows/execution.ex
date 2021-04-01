@@ -1,10 +1,21 @@
 defmodule Workflows.Execution do
   @moduledoc false
 
+  alias Workflows.Activity
+  alias Workflows.Command
   alias Workflows.Event
   alias Workflows.State
   alias Workflows.Workflow
 
+  @type scope ::
+          {:branch, pos_integer()}
+          | {:item, pos_integer()}
+
+  @type execution_result ::
+          {:continue, State.t(), list(Event.t())} | {:succeed, Activity.args(), list(Event.t())}
+
+  @spec start(Workflow.t(), Activity.ctx(), Activity.args()) ::
+          execution_result() | {:error, term()}
   def start(workflow, ctx, args) do
     with {:ok, starting} <- Workflow.starting_activity(workflow) do
       state = State.create(starting, args)
@@ -13,10 +24,13 @@ defmodule Workflows.Execution do
     end
   end
 
+  @spec resume(Workflow.t(), State.t(), Activity.ctx()) :: execution_result() | {:error, term()}
   def resume(workflow, state, ctx) do
     do_resume(workflow, state, ctx, [])
   end
 
+  @spec resume(Workflow.t(), State.t(), Activity.ctx(), Command.t()) ::
+          execution_result() | {:error, term()}
   def resume(workflow, state, ctx, cmd) do
     do_resume(workflow, state, ctx, cmd, [])
   end

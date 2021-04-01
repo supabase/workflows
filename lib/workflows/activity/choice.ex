@@ -6,8 +6,6 @@ defmodule Workflows.Activity.Choice do
   alias Workflows.Error
   alias Workflows.Event
   alias Workflows.Path
-  alias Workflows.PayloadTemplate
-  alias Workflows.ReferencePath
   alias Workflows.Rule
 
   @behaviour Activity
@@ -92,9 +90,10 @@ defmodule Workflows.Activity.Choice do
   defp collect_state_rules([], acc), do: {:ok, acc}
 
   defp collect_state_rules([choice | choices], acc) do
-    with {:ok, rule} <- Rule.create(choice) do
-      collect_state_rules(choices, [rule | acc])
-    else
+    case Rule.create(choice) do
+      {:ok, rule} ->
+        collect_state_rules(choices, [rule | acc])
+
       {:error, _err} ->
         {:error, :invalid_choice_rule}
     end

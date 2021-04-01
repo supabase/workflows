@@ -27,7 +27,7 @@ defmodule Workflows.Retrier do
   end
 
   def create(_attrs) do
-    {:error, "ErrorEquals field is required"}
+    {:error, :missing_error_equals}
   end
 
   def next(%__MODULE__{attempt: attempt, max_attempts: max_attempts} = retrier)

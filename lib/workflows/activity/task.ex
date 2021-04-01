@@ -6,6 +6,7 @@ defmodule Workflows.Activity.Task do
   alias Workflows.Catcher
   alias Workflows.Event
   alias Workflows.Path
+  alias Workflows.PayloadTemplate
   alias Workflows.ReferencePath
   alias Workflows.Retrier
 
@@ -65,6 +66,7 @@ defmodule Workflows.Activity.Task do
         result_path: result_path,
         parameters: parameters,
         result_selector: result_selector,
+        retry: retry,
         catch: catch_
       }
 

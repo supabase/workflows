@@ -4,11 +4,11 @@ defmodule Workflows.Activity.Fail do
   alias Workflows.Activity
   alias Workflows.Event
   alias Workflows.Error
-  alias Workflows.Path
-  alias Workflows.ActivityUtil
+
+  @behaviour Activity
 
   @type t :: %__MODULE__{
-          name: State.state_name(),
+          name: Activity.name(),
           error: String.t(),
           cause: String.t()
         }
@@ -41,7 +41,7 @@ defmodule Workflows.Activity.Fail do
   end
 
   @impl Activity
-  def exit(activity, _ctx, _args, result) do
+  def exit(activity, _ctx, _args, _result) do
     error = Error.create(activity.error, activity.cause)
 
     event = %Event.FailExited{

@@ -2,6 +2,7 @@ defmodule Workflows.Workflow do
   @moduledoc false
 
   alias Workflows.Activity
+  alias Workflows.Command
   alias Workflows.Event
   alias Workflows.State
 
@@ -10,6 +11,8 @@ defmodule Workflows.Workflow do
           start_at: Activity.name(),
           activities: activities()
         }
+
+  @type project_result :: {:continue, State.t()} | {:succeed, Activity.args()}
 
   defstruct [:activities, :start_at]
 
@@ -36,22 +39,26 @@ defmodule Workflows.Workflow do
     Map.fetch(workflow.activities, name)
   end
 
+  @spec execute(t(), State.t(), Activity.ctx()) :: State.execute_result()
   def execute(workflow, state, ctx) do
     with {:ok, current_activity} <- activity(workflow, state.activity) do
       State.execute(state, current_activity, ctx)
     end
   end
 
+  @spec execute(t(), State.t(), Activity.ctx(), Command.t()) :: State.execute_command_result()
   def execute(workflow, state, ctx, cmd) do
     with {:ok, current_activity} <- activity(workflow, state.activity) do
       State.execute(state, current_activity, ctx, cmd)
     end
   end
 
+  @spec project(t(), list(Event.t()) | Event.t()) :: project_result()
   def project(workflow, events) do
     project(workflow, nil, events)
   end
 
+  @spec project(t(), State.t() | nil, list(Event.t()) | Event.t()) :: project_result()
   def project(workflow, state, events) do
     do_project(workflow, state, events)
   end
@@ -74,7 +81,7 @@ defmodule Workflows.Workflow do
     end
   end
 
-  defp do_project(workflow, state, []) do
+  defp do_project(_workflow, state, []) do
     {:continue, state}
   end
 

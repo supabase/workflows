@@ -60,7 +60,7 @@ defmodule Workflows.StateTest do
       {:stay, new_state} = State.project(state, activity, started)
       {:ok, ended} = State.execute(new_state, activity, @ctx)
 
-      {:transition, {:next, "ValueInTwenties"}, result} =
+      {:transition, {:next, "ValueInTwenties"}, _result} =
         State.project(new_state, activity, ended)
     end
 
@@ -72,7 +72,7 @@ defmodule Workflows.StateTest do
       {:ok, started} = State.execute(state, activity, @ctx)
       {:stay, new_state} = State.project(state, activity, started)
       {:ok, ended} = State.execute(new_state, activity, @ctx)
-      {:transition, {:next, "DefaultState"}, result} = State.project(new_state, activity, ended)
+      {:transition, {:next, "DefaultState"}, _result} = State.project(new_state, activity, ended)
     end
   end
 
@@ -86,7 +86,7 @@ defmodule Workflows.StateTest do
     test "completes and fails without external commands" do
       {:ok, activity} = Activity.parse("Test", @activity)
 
-      state = State.Fail.create(activity, @args)
+      state = State.Fail.create(activity, @state_args)
 
       {:ok, started} = State.execute(state, activity, @ctx)
       {:stay, new_state} = State.project(state, activity, started)
@@ -323,7 +323,7 @@ defmodule Workflows.StateTest do
       {:stay, new_state} = State.project(new_state, activity, succeeded)
       {:ok, exited} = State.execute(new_state, activity, @ctx)
 
-      {:transition, {:next, "NextState"}, result} = State.project(new_state, activity, exited)
+      {:transition, {:next, "NextState"}, _result} = State.project(new_state, activity, exited)
     end
   end
 
@@ -340,7 +340,7 @@ defmodule Workflows.StateTest do
       {:ok, started} = State.execute(state, activity, @ctx)
       {:stay, new_state} = State.project(state, activity, started)
       {:ok, ended} = State.execute(new_state, activity, @ctx)
-      {:transition, {:next, "NextState"}, result} = State.project(new_state, activity, ended)
+      {:transition, {:next, "NextState"}, _result} = State.project(new_state, activity, ended)
     end
   end
 
@@ -356,7 +356,7 @@ defmodule Workflows.StateTest do
       {:ok, started} = State.execute(state, activity, @ctx)
       {:stay, new_state} = State.project(state, activity, started)
       {:ok, ended} = State.execute(new_state, activity, @ctx)
-      {:succeed, result} = State.project(new_state, activity, ended)
+      {:succeed, _result} = State.project(new_state, activity, ended)
     end
   end
 
@@ -392,7 +392,7 @@ defmodule Workflows.StateTest do
 
       {:stay, new_state} = State.project(new_state, activity, finished)
       {:ok, ended} = State.execute(new_state, activity, @ctx)
-      {:transition, {:next, "NextState"}, result} = State.project(new_state, activity, ended)
+      {:transition, {:next, "NextState"}, _result} = State.project(new_state, activity, ended)
     end
   end
 

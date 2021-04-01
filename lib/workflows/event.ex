@@ -46,15 +46,13 @@ defmodule Workflows.Event do
   * TaskExited
   """
 
-  alias Workflows.Activity
   alias Workflows.Execution
 
   @type event :: any()
 
-  @type t :: %__MODULE__{
-          event: event(),
-          scope: Execution.scope()
-        }
+  @type t :: struct()
+
+  @type maybe :: :no_event | t()
 
   defstruct [:event, :scope]
 
@@ -75,15 +73,5 @@ defmodule Workflows.Event do
       [] -> {nil, []}
       [current | scope] -> {current, scope}
     end)
-  end
-
-  @spec execution_started(Activity.args()) :: t()
-  def execution_started(args) do
-    create({:execution_started, args}, [])
-  end
-
-  @spec execution_succeeded(Activity.args()) :: t()
-  def execution_succeeded(args) do
-    create({:execution_succeeded, args}, [])
   end
 end

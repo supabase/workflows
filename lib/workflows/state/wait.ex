@@ -22,7 +22,7 @@ defmodule Workflows.State.Wait do
       {:running, _state_args, effective_args} ->
         Activity.Wait.start_wait(activity, ctx, effective_args)
 
-      {:waiting, state_args, effective_args} ->
+      {:waiting, _state_args, _effective_args} ->
         # Need command to move forward
         {:ok, :no_event}
 

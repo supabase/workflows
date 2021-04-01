@@ -22,7 +22,7 @@ defmodule Workflows.State.Task do
       {:running, _state_args, effective_args} ->
         Activity.Task.start_task(activity, ctx, effective_args)
 
-      {:waiting_response, state_args, effective_args} ->
+      {:waiting_response, _state_args, _effective_args} ->
         # Need command to move forward
         {:ok, :no_event}
 

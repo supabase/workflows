@@ -3,7 +3,9 @@ defmodule Workflows.Path do
   A Path is used to query json objects.
   """
 
-  @opaque t :: term()
+  @opaque t :: %__MODULE__{
+            inner: term()
+          }
 
   defstruct [:inner]
 

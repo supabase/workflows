@@ -47,17 +47,11 @@ defmodule Workflows.State.Map do
             case child_state do
               {:continue, child_state} ->
                 with {:ok, event} <- Workflow.execute(activity.iterator, child_state, ctx, cmd) do
-                  case event do
-                    :no_event ->
-                      {:ok, :no_event}
-
-                    event ->
-                      {
-                        :ok,
-                        event
-                        |> Event.push_scope({:item, item_index})
-                      }
-                  end
+                  {
+                    :ok,
+                    event
+                    |> Event.push_scope({:item, item_index})
+                  }
                 end
 
               _ ->
@@ -102,7 +96,7 @@ defmodule Workflows.State.Map do
        ) do
     case state.inner do
       {:starting, state_args, effective_args} ->
-        with {:ok, children} = create_children_starting_state(activity.iterator, effective_args) do
+        with {:ok, children} <- create_children_starting_state(activity.iterator, effective_args) do
           new_state = %State.Map{
             state
             | inner: {:running, state_args, effective_args, children}
@@ -198,7 +192,7 @@ defmodule Workflows.State.Map do
   end
 
   # Finished executing all children
-  defp execute_child(iterator, [], _max_concurrency, _num_running, _item_index, _ctx),
+  defp execute_child(_iterator, [], _max_concurrency, _num_running, _item_index, _ctx),
     do: {:ok, :no_event}
 
   defp execute_child(
@@ -260,7 +254,7 @@ defmodule Workflows.State.Map do
     Activity.Map.complete_map(activity, ctx, result)
   end
 
-  defp check_all_children_completed(activity, ctx, [{:continue, _} | _children], result) do
+  defp check_all_children_completed(_activity, _ctx, [{:continue, _} | _children], _result) do
     # Still running, waiting for command
     {:ok, :no_event}
   end

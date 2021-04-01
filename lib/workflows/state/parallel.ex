@@ -49,13 +49,7 @@ defmodule Workflows.State.Parallel do
             case child_state do
               {branch, {:continue, child_state}} ->
                 with {:ok, event} <- Workflow.execute(branch, child_state, ctx, cmd) do
-                  case event do
-                    :no_event ->
-                      {:ok, :no_event}
-
-                    event ->
-                      {:ok, event |> Event.push_scope({:branch, branch_index})}
-                  end
+                  {:ok, event |> Event.push_scope({:branch, branch_index})}
                 end
 
               _ ->
@@ -100,7 +94,7 @@ defmodule Workflows.State.Parallel do
        ) do
     case state.inner do
       {:starting, state_args, effective_args} ->
-        with {:ok, children} = create_children_starting_state(activity.branches, effective_args) do
+        with {:ok, children} <- create_children_starting_state(activity.branches, effective_args) do
           new_state = %State.Parallel{
             state
             | inner: {:running, state_args, effective_args, children}
@@ -198,7 +192,7 @@ defmodule Workflows.State.Parallel do
   end
 
   # Finished executing all children
-  defp execute_child([], [], _branch_index, ctx), do: {:ok, :no_event}
+  defp execute_child([], [], _branch_index, _ctx), do: {:ok, :no_event}
 
   defp execute_child([branch | branches], [{:continue, child} | children], branch_index, ctx) do
     with {:ok, activity} <- Workflow.activity(branch, child.activity),
@@ -229,7 +223,7 @@ defmodule Workflows.State.Parallel do
     Activity.Parallel.complete_parallel(activity, ctx, result)
   end
 
-  defp check_all_children_completed(activity, ctx, [{:continue, _} | _children], result) do
+  defp check_all_children_completed(_activity, _ctx, [{:continue, _} | _children], _result) do
     # Still running, waiting for command
     {:ok, :no_event}
   end

@@ -185,7 +185,7 @@ defmodule WorkflowsTest do
   test "simple parallel workflow" do
     {:ok, wf} = Workflow.parse(@simple_parallel_workflow)
 
-    {:succeed, result, events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:succeed, result, _events} = Execution.start(wf, @ctx, %{"foo" => 42})
 
     assert length(result) == 2
   end
@@ -210,10 +210,10 @@ defmodule WorkflowsTest do
       end)
 
     finish_b1 = Command.finish_waiting(wait_b1)
-    {:continue, state, events} = Execution.resume(wf, state, @ctx, finish_b1)
+    {:continue, state, _events} = Execution.resume(wf, state, @ctx, finish_b1)
 
     finish_a1 = Command.finish_waiting(wait_a1)
-    {:succeed, result, events} = Execution.resume(wf, state, @ctx, finish_a1)
+    {:succeed, result, _events} = Execution.resume(wf, state, @ctx, finish_a1)
 
     assert length(result) == 2
   end
@@ -238,10 +238,10 @@ defmodule WorkflowsTest do
       end)
 
     finish_a1 = Command.finish_waiting(wait_a1)
-    {:continue, state, events} = Execution.resume(wf, state, @ctx, finish_a1)
+    {:continue, state, _events} = Execution.resume(wf, state, @ctx, finish_a1)
 
     finish_c1 = Command.finish_waiting(wait_c1)
-    {:succeed, result, events} = Execution.resume(wf, state, @ctx, finish_c1)
+    {:succeed, result, _events} = Execution.resume(wf, state, @ctx, finish_c1)
 
     assert [[_], _] = result
   end

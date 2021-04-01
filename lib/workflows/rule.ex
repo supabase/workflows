@@ -14,15 +14,17 @@ defmodule Workflows.Rule do
   Create a rule that can be matched on an input.
   """
   def create(%{"Next" => next} = rule) do
-    with {:ok, rule} <- do_create(rule) do
-      {:ok, %__MODULE__{next: next, rule: rule}}
-    else
-      err -> err
+    case do_create(rule) do
+      {:ok, rule} ->
+        {:ok, %__MODULE__{next: next, rule: rule}}
+
+      err ->
+        err
     end
   end
 
   def create(_rule) do
-    {:error, "Missing field Next"}
+    {:error, :missing_next}
   end
 
   def call(%__MODULE__{rule: rule}, args) do
@@ -32,7 +34,7 @@ defmodule Workflows.Rule do
   ## Private
 
   defp do_create(%{"Not" => inner_case}) do
-    with {:ok, inner_rule} = do_create(inner_case) do
+    with {:ok, inner_rule} <- do_create(inner_case) do
       rule = fn args ->
         not inner_rule.(args)
       end
@@ -42,7 +44,7 @@ defmodule Workflows.Rule do
   end
 
   defp do_create(%{"Or" => cases}) do
-    with {:ok, inner_rules} = do_create_cases(cases) do
+    with {:ok, inner_rules} <- do_create_cases(cases) do
       rule = fn args ->
         Enum.any?(inner_rules, fn rule -> rule.(args) end)
       end
@@ -52,7 +54,7 @@ defmodule Workflows.Rule do
   end
 
   defp do_create(%{"And" => cases}) do
-    with {:ok, inner_rules} = do_create_cases(cases) do
+    with {:ok, inner_rules} <- do_create_cases(cases) do
       rule = fn args ->
         Enum.all?(inner_rules, fn rule -> rule.(args) end)
       end

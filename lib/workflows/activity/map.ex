@@ -14,11 +14,11 @@ defmodule Workflows.Activity.Map do
   @behaviour Activity
 
   @type t :: %__MODULE__{
-          name: State.state_name(),
-          iterator: Machine.t(),
+          name: Activity.name(),
+          iterator: Workflow.t(),
           items_path: ReferencePath.t() | nil,
           max_concurrency: non_neg_integer(),
-          transition: State.transition(),
+          transition: Activity.transition(),
           input_path: Path.t() | nil,
           output_path: Path.t() | nil,
           result_path: ReferencePath.t() | nil,
@@ -67,6 +67,7 @@ defmodule Workflows.Activity.Map do
         result_path: result_path,
         parameters: parameters,
         result_selector: result_selector,
+        retry: retry,
         catch: catch_
       }
 

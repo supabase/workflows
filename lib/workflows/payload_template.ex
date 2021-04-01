@@ -3,7 +3,9 @@ defmodule Workflows.PayloadTemplate do
   A PayloadTemplate is used to create new Json objects by combining other objects.
   """
 
-  @opaque t :: term()
+  @opaque t :: %__MODULE__{
+            template: map()
+          }
 
   defstruct [:template]
 
