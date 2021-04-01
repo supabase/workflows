@@ -32,23 +32,27 @@ defmodule Workflows.Activity.Succeed do
 
   @impl Activity
   def enter(activity, _ctx, args) do
-    event = %Event.SucceedEntered{
-      activity: activity.name,
-      scope: [],
-      args: args
-    }
+    with {:ok, effective_args} <- ActivityUtil.apply_input_path(activity, args) do
+      event = %Event.SucceedEntered{
+        activity: activity.name,
+        scope: [],
+        args: effective_args
+      }
 
-    {:ok, event}
+      {:ok, event}
+    end
   end
 
   @impl Activity
   def exit(activity, _ctx, _args, result) do
-    event = %Event.SucceedExited{
-      activity: activity.name,
-      scope: [],
-      result: result
-    }
+    with {:ok, effective_result} <- ActivityUtil.apply_output_path(activity, result) do
+      event = %Event.SucceedExited{
+        activity: activity.name,
+        scope: [],
+        result: effective_result
+      }
 
-    {:ok, event}
+      {:ok, event}
+    end
   end
 end

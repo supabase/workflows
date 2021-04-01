@@ -50,25 +50,29 @@ defmodule Workflows.Activity.Wait do
 
   @impl Activity
   def enter(activity, _ctx, args) do
-    event = %Event.WaitEntered{
-      activity: activity.name,
-      scope: [],
-      args: args
-    }
+    with {:ok, effective_args} <- ActivityUtil.apply_input_path(activity, args) do
+      event = %Event.WaitEntered{
+        activity: activity.name,
+        scope: [],
+        args: effective_args
+      }
 
-    {:ok, event}
+      {:ok, event}
+    end
   end
 
   @impl Activity
   def exit(activity, _ctx, _args, result) do
-    event = %Event.WaitExited{
-      activity: activity.name,
-      scope: [],
-      result: result,
-      transition: activity.transition
-    }
+    with {:ok, effective_result} <- ActivityUtil.apply_output_path(activity, result) do
+      event = %Event.WaitExited{
+        activity: activity.name,
+        scope: [],
+        result: effective_result,
+        transition: activity.transition
+      }
 
-    {:ok, event}
+      {:ok, event}
+    end
   end
 
   def start_wait(activity, _ctx, args) do

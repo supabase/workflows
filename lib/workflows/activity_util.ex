@@ -81,6 +81,32 @@ defmodule Workflows.ActivityUtil do
 
   def parse_catch(_retry), do: {:ok, []}
 
+  ## Apply input/output transforms
+
+  def apply_input_path(activity, args) do
+    apply_path(activity.input_path, args)
+  end
+
+  def apply_output_path(activity, args) do
+    apply_path(activity.output_path, args)
+  end
+
+  def apply_parameters(activity, ctx, args) do
+    PayloadTemplate.apply(activity.parameters, ctx, args)
+  end
+
+  def apply_result_selector(activity, ctx, args) do
+    PayloadTemplate.apply(activity.result_selector, ctx, args)
+  end
+
+  def apply_result_path(activity, _ctx, args, state_args) do
+    if activity.result_path == nil do
+      {:ok, state_args}
+    else
+      ReferencePath.apply(activity.result_path, args, state_args)
+    end
+  end
+
   ## Private
 
   defp do_parse_retry([retrier | retriers], acc) do
@@ -101,5 +127,19 @@ defmodule Workflows.ActivityUtil do
 
   defp do_parse_catch([], acc) do
     {:ok, Enum.reverse(acc)}
+  end
+
+  defp apply_path(nil, _args) do
+    # If the value of InputPath is null, that means that the raw input is discarded, and the effective input for
+    # the state is an empty JSON object, {}. Note that having a value of null is different from the
+    # "InputPath" field being absent.
+
+    # If the value of OutputPath is null, that means the input and result are discarded, and the effective output
+    # from the state is an empty JSON object, {}.
+    {:ok, %{}}
+  end
+
+  defp apply_path(path, args) do
+    Path.query(path, args)
   end
 end

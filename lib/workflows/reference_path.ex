@@ -14,7 +14,9 @@ defmodule Workflows.ReferencePath do
   """
   @spec create(String.t()) :: {:ok, t()} | {:error, term()}
   def create(path) do
-    {:ok, %__MODULE__{inner: path}}
+    with {:ok, inner} <- Warpath.Expression.compile(path) do
+      {:ok, %__MODULE__{inner: inner}}
+    end
   end
 
   @spec apply(t(), map(), map()) :: {:ok, term()} | {:error, term()}
