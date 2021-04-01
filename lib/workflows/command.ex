@@ -20,4 +20,12 @@ defmodule Workflows.Command do
       scope: event.scope
     }
   end
+
+  def complete_task(%Event.TaskStarted{} = event, result) do
+    %Workflows.Command.CompleteTask{
+      activity: event.activity,
+      scope: event.scope,
+      result: result
+    }
+  end
 end

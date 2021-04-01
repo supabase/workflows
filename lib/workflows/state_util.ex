@@ -46,6 +46,18 @@ defmodule Workflows.StateUtil do
     State.Fail.project(state, activity, event)
   end
 
+  defp do_create(%Activity.Map{} = activity, ctx) do
+    State.Map.create(activity, ctx)
+  end
+
+  defp do_execute(%State.Map{} = state, activity, ctx) do
+    State.Map.execute(state, activity, ctx)
+  end
+
+  defp do_project(%State.Map{} = state, activity, event) do
+    State.Map.project(state, activity, event)
+  end
+
   defp do_create(%Activity.Pass{} = activity, ctx) do
     State.Pass.create(activity, ctx)
   end
@@ -104,6 +116,10 @@ defmodule Workflows.StateUtil do
 
   defp do_project(%State.Wait{} = state, activity, event) do
     State.Wait.project(state, activity, event)
+  end
+
+  defp do_execute_command(%State.Map{} = state, activity, ctx, cmd) do
+    State.Map.execute(state, activity, ctx, cmd)
   end
 
   defp do_execute_command(%State.Parallel{} = state, activity, ctx, cmd) do

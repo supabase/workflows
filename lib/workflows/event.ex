@@ -29,9 +29,6 @@ defmodule Workflows.Event do
 
   * MapEntered
   * MapStarted
-  * MapIterationStarted
-  * MapIterationFailed
-  * MapIterationSucceeded
   * MapFailed
   * MapSucceed
   * MapExited

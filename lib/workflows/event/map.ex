@@ -1,19 +1,19 @@
-defmodule Workflows.Event.ParallelEntered do
+defmodule Workflows.Event.MapEntered do
   defstruct [:activity, :scope, :args]
 end
 
-defmodule Workflows.Event.ParallelExited do
+defmodule Workflows.Event.MapExited do
   defstruct [:activity, :scope, :result, :transition]
 end
 
-defmodule Workflows.Event.ParallelStarted do
+defmodule Workflows.Event.MapStarted do
   defstruct [:activity, :scope, :args]
 end
 
-defmodule Workflows.Event.ParallelSucceeded do
+defmodule Workflows.Event.MapSucceeded do
   defstruct [:activity, :scope, :result]
 end
 
-defmodule Workflows.Event.ParallelFailed do
+defmodule Workflows.Event.MapFailed do
   defstruct [:activity, :scope, :error]
 end

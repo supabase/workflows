@@ -32,6 +32,9 @@ defmodule Workflows.Activity do
   defp do_parse(name, %{"Type" => "Fail"} = state),
     do: Activity.Fail.parse(name, state)
 
+  defp do_parse(name, %{"Type" => "Map"} = state),
+    do: Activity.Map.parse(name, state)
+
   defp do_parse(name, %{"Type" => "Parallel"} = state),
     do: Activity.Parallel.parse(name, state)
 
@@ -65,6 +68,14 @@ defmodule Workflows.Activity do
 
   defp do_exit(%Activity.Fail{} = activity, ctx, args, result) do
     Activity.Fail.exit(activity, ctx, args, result)
+  end
+
+  defp do_enter(%Activity.Map{} = activity, ctx, args) do
+    Activity.Map.enter(activity, ctx, args)
+  end
+
+  defp do_exit(%Activity.Map{} = activity, ctx, args, result) do
+    Activity.Map.exit(activity, ctx, args, result)
   end
 
   defp do_enter(%Activity.Pass{} = activity, ctx, args) do
