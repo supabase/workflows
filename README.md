@@ -51,7 +51,7 @@ or `{:success, result, events}` if the workflow executes to termination.
 ```elixir
 ctx = %{"environment" => "staging"}
 args = %{"user" => "alfred@example.org"}
-{:continue, state, events} = Workflows.start(workflow, ctx, args)
+{:continue, execution, events} = Workflows.start(workflow, ctx, args)
 IO.inspect events
 ```
 
@@ -64,7 +64,7 @@ call the `Workflows.resume` function with a `Command` containing the side effect
 wait_event = events |> get_wait_event()
 finish_wait = Workflows.Command.finish_waiting(wait_event)
 {:succeed, result, events} = 
-  Workflows.resume(workflow, state, ctx, finish_wait)
+  Workflows.resume(execution, finish_wait)
 ```
 
 <!-- MDOC -->

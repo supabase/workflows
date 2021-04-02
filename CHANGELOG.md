@@ -1,11 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 -- 2021-04-02
 
 ### Added
 
-- Execute `Fail`, `Task`, `Parallel`, and `Choice` activities
+- Execute `Fail`, `Task`, `Map`, `Parallel`, and `Choice` activities
 - New `Execute` module to run workflows until command is needed
+- New top-level functions in `Workflows`
 
 
 ## 0.1.0 -- 2021-03-29

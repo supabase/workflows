@@ -2,7 +2,7 @@ defmodule Workflows.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/supabase/workflows"
-  @version "0.1.6"
+  @version "0.2.0"
 
   def project do
     [
