@@ -46,10 +46,33 @@ defmodule Workflows.Activity.Pass do
   end
 
   @impl Activity
-  def enter(_activity, _ctx, args), do: {:ok, [Event.create({:pass_entered, args}, [])]}
+  def enter(activity, ctx, args) do
+    with {:ok, args} <- ActivityUtil.apply_input_path(activity, args),
+         {:ok, effective_args} <- ActivityUtil.apply_parameters(activity, ctx, args) do
+      event = %Event.PassEntered{
+        activity: activity.name,
+        scope: [],
+        args: effective_args
+      }
+
+      {:ok, event}
+    end
+  end
 
   @impl Activity
-  def exit(_activity, _ctx, _args, result), do: {:ok, [Event.create({:pass_exited, result}, [])]}
+  def exit(activity, ctx, args, result) do
+    with {:ok, result} <- ActivityUtil.apply_result_path(activity, ctx, result, args),
+         {:ok, effective_result} <- ActivityUtil.apply_output_path(activity, result) do
+      event = %Event.PassExited{
+        activity: activity.name,
+        scope: [],
+        result: effective_result,
+        transition: activity.transition
+      }
+
+      {:ok, event}
+    end
+  end
 
   ## Private
 

@@ -2,51 +2,73 @@ defmodule Workflows.State do
   @moduledoc false
 
   alias Workflows.Activity
+  alias Workflows.Command
+  alias Workflows.Event
+  alias Workflows.State
+  alias Workflows.StateUtil
 
-  # Activity finished and ready to transition
-  @type status ::
-          {:transition_to, Activity.name()}
-          # Activity completed, need to exit
-          | {:completed, Activity.name()}
-          # Activity is running
-          | {:running, Activity.name()}
-          # Activity succeeded, terminal
-          | :succeeded
-          # Activity failed, terminal
-          | :failed
+  @type t ::
+          State.Choice.t()
+          | State.Fail.t()
+          | State.Map.t()
+          | State.Parallel.t()
+          | State.Pass.t()
+          | State.Succeed.t()
+          | State.Task.t()
+          | State.Wait.t()
 
-  @type t :: %__MODULE__{
-          status: status(),
-          args: Activity.args()
+  @callback project(state :: t(), activity :: Activity.t(), event :: Event.t()) ::
+              {:stay, state :: t()} | {:transition, Activity.name(), Activity.args()}
+
+  @type execute_result :: {:ok, Event.maybe()} | {:error, term()}
+  @type execute_command_result :: {:ok, Event.t()} | {:error, term()}
+
+  @type project_result ::
+          {:stay, t()}
+          | {:transition, Activity.transition(), Activity.args()}
+          | {:succeed, Activity.args()}
+
+  @spec create(Activity.t(), Activity.args()) :: t()
+  def create(activity, args) do
+    StateUtil.create(activity, args)
+  end
+
+  @spec execute(t(), Activity.t(), Activity.ctx()) :: execute_result()
+  def execute(state, activity, ctx) do
+    StateUtil.execute(state, activity, ctx)
+  end
+
+  @spec execute(t(), Activity.t(), Activity.ctx(), Command.t()) :: execute_command_result()
+  def execute(state, activity, ctx, cmd) do
+    StateUtil.execute(state, activity, ctx, cmd)
+  end
+
+  @spec project(t(), Activity.t(), Event.t()) :: project_result()
+  def(project(state, activity, event)) do
+    StateUtil.project(state, activity, event)
+  end
+
+  defmacro __using__(_opts) do
+    quote location: :keep do
+      defstruct [:activity, :inner]
+
+      alias Workflows.Activity
+      alias Workflows.State
+
+      @behaviour State
+
+      @type t :: %__MODULE__{
+              activity: String.t(),
+              inner: term()
+            }
+
+      @spec create(Activity.t(), Activity.args()) :: t()
+      def create(activity, state_args) do
+        %__MODULE__{
+          activity: activity.name,
+          inner: {:before_enter, state_args}
         }
-
-  defstruct [:status, :args]
-
-  @spec create(status(), Activity.args()) :: t()
-  def create(status, args) do
-    %__MODULE__{
-      status: status,
-      args: args
-    }
-  end
-
-  @spec transition_to(Activity.name(), Activity.args()) :: t()
-  def transition_to(name, args) do
-    create({:transition_to, name}, args)
-  end
-
-  @spec completed(Activity.name(), Activity.args()) :: t()
-  def completed(name, args) do
-    create({:completed, name}, args)
-  end
-
-  @spec running(Activity.name(), Activity.args()) :: t()
-  def running(name, args) do
-    create({:running, name}, args)
-  end
-
-  @spec succeeded(Activity.args()) :: t()
-  def succeeded(args) do
-    create(:succeeded, args)
+      end
+    end
   end
 end

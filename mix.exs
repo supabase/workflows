@@ -2,10 +2,11 @@ defmodule Workflows.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/supabase/workflows"
-  @version "0.1.6"
+  @version "0.2.0"
 
   def project do
     [
+      name: "Workflows",
       app: :workflows,
       version: @version,
       elixir: "~> 1.9",
@@ -27,6 +28,7 @@ defmodule Workflows.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:warpath, "~> 0.6.0"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: [:dev, :test], runtime: false}
@@ -56,12 +58,11 @@ defmodule Workflows.MixProject do
 
   defp docs() do
     [
-      main: "readme",
-      name: "Workflows",
+      main: "Workflows",
       source_ref: "v#{@version}",
       canonical: "http://hexdocs.pm/workflows",
       source_url: @source_url,
-      extras: ["README.md", "CHANGELOG.md", "LICENSE"]
+      extras: ["CHANGELOG.md", "LICENSE"]
     ]
   end
 end

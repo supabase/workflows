@@ -1,4 +1,4 @@
-defmodule Workflows.Activity.Parallel do
+defmodule Workflows.Activity.Task do
   @moduledoc false
 
   alias Workflows.Activity
@@ -6,16 +6,17 @@ defmodule Workflows.Activity.Parallel do
   alias Workflows.Catcher
   alias Workflows.Event
   alias Workflows.Path
-  alias Workflows.ReferencePath
   alias Workflows.PayloadTemplate
+  alias Workflows.ReferencePath
   alias Workflows.Retrier
-  alias Workflows.Workflow
 
   @behaviour Activity
 
   @type t :: %__MODULE__{
           name: Activity.name(),
-          branches: nonempty_list(Workflow.t()),
+          resource: String.t(),
+          timeout: {:value, pos_integer()} | {:reference, ReferencePath.t()} | nil,
+          heartbeat: {:value, pos_integer()} | {:reference, ReferencePath.t()} | nil,
           transition: Activity.transition(),
           input_path: Path.t() | nil,
           output_path: Path.t() | nil,
@@ -28,7 +29,9 @@ defmodule Workflows.Activity.Parallel do
 
   defstruct [
     :name,
-    :branches,
+    :resource,
+    :timeout,
+    :heartbeat,
     :transition,
     :input_path,
     :output_path,
@@ -41,7 +44,9 @@ defmodule Workflows.Activity.Parallel do
 
   @impl Activity
   def parse(state_name, definition) do
-    with {:ok, branches} <- parse_branches(definition),
+    with {:ok, resource} <- parse_resource(definition),
+         {:ok, timeout} <- parse_timeout(definition),
+         {:ok, heartbeat} <- parse_heartbeat(definition),
          {:ok, transition} <- ActivityUtil.parse_transition(definition),
          {:ok, input_path} <- ActivityUtil.parse_input_path(definition),
          {:ok, output_path} <- ActivityUtil.parse_output_path(definition),
@@ -52,7 +57,9 @@ defmodule Workflows.Activity.Parallel do
          {:ok, catch_} <- ActivityUtil.parse_catch(definition) do
       state = %__MODULE__{
         name: state_name,
-        branches: branches,
+        resource: resource,
+        timeout: timeout,
+        heartbeat: heartbeat,
         transition: transition,
         input_path: input_path,
         output_path: output_path,
@@ -71,7 +78,7 @@ defmodule Workflows.Activity.Parallel do
   def enter(activity, ctx, args) do
     with {:ok, args} <- ActivityUtil.apply_input_path(activity, args),
          {:ok, effective_args} <- ActivityUtil.apply_parameters(activity, ctx, args) do
-      event = %Event.ParallelEntered{
+      event = %Event.TaskEntered{
         activity: activity.name,
         scope: [],
         args: effective_args
@@ -86,7 +93,7 @@ defmodule Workflows.Activity.Parallel do
     with {:ok, result} <- ActivityUtil.apply_result_selector(activity, ctx, result),
          {:ok, result} <- ActivityUtil.apply_result_path(activity, ctx, result, args),
          {:ok, effective_result} <- ActivityUtil.apply_output_path(activity, result) do
-      event = %Event.ParallelExited{
+      event = %Event.TaskExited{
         activity: activity.name,
         scope: [],
         result: effective_result,
@@ -97,18 +104,19 @@ defmodule Workflows.Activity.Parallel do
     end
   end
 
-  def start_parallel(activity, _ctx, args) do
-    event = %Event.ParallelStarted{
+  def start_task(activity, _ctx, args) do
+    event = %Event.TaskStarted{
       activity: activity.name,
       scope: [],
+      resource: activity.resource,
       args: args
     }
 
     {:ok, event}
   end
 
-  def complete_parallel(activity, _ctx, result) do
-    event = %Event.ParallelSucceeded{
+  def complete_task(activity, _ctx, result) do
+    event = %Event.TaskSucceeded{
       activity: activity.name,
       scope: [],
       result: result
@@ -119,17 +127,53 @@ defmodule Workflows.Activity.Parallel do
 
   ## Private
 
-  defp parse_branches(%{"Branches" => branches}) when is_list(branches) do
-    collect_branches(branches, [])
-  end
-
-  defp parse_branches(_definition), do: {:error, :empty_branches}
-
-  defp collect_branches([], acc), do: {:ok, Enum.reverse(acc)}
-
-  defp collect_branches([branch | branches], acc) do
-    with {:ok, branch} <- Workflow.parse(branch) do
-      collect_branches(branches, [branch | acc])
+  defp parse_resource(%{"Resource" => resource}) do
+    if resource == nil do
+      {:error, :missing_resource}
+    else
+      {:ok, resource}
     end
   end
+
+  defp parse_resource(_definition), do: {:error, "Must have Resource"}
+
+  defp parse_timeout(%{"TimeoutSeconds" => _, "TimeoutSecondsPath" => _}) do
+    {:error, :multiple_timeout}
+  end
+
+  defp parse_timeout(%{"TimeoutSeconds" => seconds}) do
+    if is_integer(seconds) and seconds > 0 do
+      {:ok, {:value, seconds}}
+    else
+      {:error, :invalid_timeout}
+    end
+  end
+
+  defp parse_timeout(%{"TimeoutSecondsPath" => path}) do
+    with {:ok, path} <- ReferencePath.create(path) do
+      {:ok, {:reference, path}}
+    end
+  end
+
+  defp parse_timeout(_definition), do: {:ok, nil}
+
+  defp parse_heartbeat(%{"HeartbeatSeconds" => _, "HeartbeatSecondsPath" => _}) do
+    {:error, :multiple_heartbeat}
+  end
+
+  defp parse_heartbeat(%{"HeartbeatSeconds" => seconds}) do
+    if is_integer(seconds) and seconds > 0 do
+      {:ok, {:value, seconds}}
+    else
+      {:error, :invalid_heartbeat}
+    end
+  end
+
+  defp parse_heartbeat(%{"HeartbeatSecondsPath" => path}) do
+    with {:ok, path} <- ReferencePath.create(path) do
+      {:ok, {:reference, path}}
+    end
+  end
+
+  defp parse_heartbeat(_definition), do: {:ok, nil}
 end
