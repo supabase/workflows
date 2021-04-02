@@ -45,8 +45,8 @@ workflow_definition = %{
 
 You can then start the workflow by calling the `Workflows.start` function and passing a context (a map containing data
 that is shared between all states), and the arguments passed to the initial state.
-The function returns `{:continue, state, events}` if the workflow execution has to stop to wait for an external command,
-or `{:success, result, events}` if the workflow executes to termination.
+The function returns `{:continue, execution, events}` if the workflow execution has to stop to wait for an external command,
+or `{:succeed, result, events}` if the workflow executes to termination.
 
 ```elixir
 ctx = %{"environment" => "staging"}
@@ -63,8 +63,13 @@ call the `Workflows.resume` function with a `Command` containing the side effect
 ```elixir
 wait_event = events |> get_wait_event()
 finish_wait = Workflows.Command.finish_waiting(wait_event)
-{:succeed, result, events} = 
-  Workflows.resume(execution, finish_wait)
+{:succeed, result, events} = Workflows.resume(execution, finish_wait)
+```
+
+You can restore a workflow execution state from its events with the `Workflows.recover` function.
+
+```elixir
+{:continue, execution, new_events} = Workflows.recover(workflow, events)
 ```
 
 <!-- MDOC -->
