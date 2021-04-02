@@ -12,7 +12,7 @@ defmodule Workflows.Workflow do
           activities: activities()
         }
 
-  @type project_result :: {:continue, State.t()} | {:succeed, Activity.args()}
+  @type project_result :: {:continue, State.t()} | {:succeed, Activity.args()} | {:error, term()}
 
   defstruct [:activities, :start_at]
 
@@ -53,11 +53,6 @@ defmodule Workflows.Workflow do
     end
   end
 
-  @spec project(t(), list(Event.t()) | Event.t()) :: project_result()
-  def project(workflow, events) do
-    project(workflow, nil, events)
-  end
-
   @spec project(t(), State.t() | nil, list(Event.t()) | Event.t()) :: project_result()
   def project(workflow, state, events) do
     do_project(workflow, state, events)
@@ -83,13 +78,6 @@ defmodule Workflows.Workflow do
 
   defp do_project(_workflow, state, []) do
     {:continue, state}
-  end
-
-  defp do_project(workflow, nil, [%Event.ExecutionStarted{args: args} | events]) do
-    with {:ok, starting} <- starting_activity(workflow) do
-      state = State.create(starting, args)
-      project(workflow, state, events)
-    end
   end
 
   defp do_project(workflow, state, [event | events]) do

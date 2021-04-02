@@ -210,7 +210,7 @@ defmodule WorkflowsTest do
     {:ok, wf} = Workflow.parse(@simple_workflow)
 
     {:succeed, result, events} = Execution.start(wf, @ctx, %{"foo" => 42})
-    {:succeed, result_replay} = Workflow.project(wf, events)
+    {:succeed, result_replay, []} = Workflows.recover(wf, events)
 
     assert result == result_replay
   end
@@ -218,16 +218,34 @@ defmodule WorkflowsTest do
   test "simple wait workflow" do
     {:ok, wf} = Workflow.parse(@simple_wait_workflow)
 
-    {:continue, state, events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:continue, exec, events} = Execution.start(wf, @ctx, %{"foo" => 42})
 
     wait_started = List.last(events)
     assert %Event.WaitStarted{} = wait_started
 
     cmd = Command.finish_waiting(wait_started)
-    {:succeed, result, new_events} = Execution.resume(wf, state, @ctx, cmd)
+    {:succeed, result, new_events} = Execution.resume(exec, cmd)
 
-    {:succeed, result_replay} = Workflow.project(wf, events ++ new_events)
+    {:succeed, result_replay, []} = Workflows.recover(wf, events ++ new_events)
     assert result == result_replay
+  end
+
+  test "recover from events" do
+    {:ok, wf} = Workflow.parse(@simple_wait_workflow)
+
+    {:continue, exec, events} = Execution.start(wf, @ctx, %{"foo" => 42})
+
+    wait_started = List.last(events)
+    assert %Event.WaitStarted{} = wait_started
+
+    cmd = Command.finish_waiting(wait_started)
+    {:succeed, result, new_events} = Execution.resume(exec, cmd)
+
+    some_events = events ++ Enum.take(new_events, 2)
+    # Some events are missing, so recovering will continue execution from that point on.
+    {:succeed, result_replay, events} = Workflows.recover(wf, some_events)
+    assert result == result_replay
+    assert length(events) == 2
   end
 
   test "simple parallel workflow" do
@@ -241,7 +259,7 @@ defmodule WorkflowsTest do
   test "parallel workflow with wait inside" do
     {:ok, wf} = Workflow.parse(@parallel_workflow_with_wait)
 
-    {:continue, state, events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:continue, exec, events} = Execution.start(wf, @ctx, %{"foo" => 42})
 
     wait_b1 =
       events
@@ -258,10 +276,10 @@ defmodule WorkflowsTest do
       end)
 
     finish_b1 = Command.finish_waiting(wait_b1)
-    {:continue, state, _events} = Execution.resume(wf, state, @ctx, finish_b1)
+    {:continue, exec, _events} = Execution.resume(exec, finish_b1)
 
     finish_a1 = Command.finish_waiting(wait_a1)
-    {:succeed, result, _events} = Execution.resume(wf, state, @ctx, finish_a1)
+    {:succeed, result, _events} = Execution.resume(exec, finish_a1)
 
     assert length(result) == 2
   end
@@ -269,7 +287,7 @@ defmodule WorkflowsTest do
   test "nested parallel workflow" do
     {:ok, wf} = Workflow.parse(@nested_parallel_workflows)
 
-    {:continue, state, events} = Execution.start(wf, @ctx, %{"foo" => 42})
+    {:continue, exec, events} = Execution.start(wf, @ctx, %{"foo" => 42})
 
     wait_c1 =
       events
@@ -286,10 +304,10 @@ defmodule WorkflowsTest do
       end)
 
     finish_a1 = Command.finish_waiting(wait_a1)
-    {:continue, state, _events} = Execution.resume(wf, state, @ctx, finish_a1)
+    {:continue, exec, _events} = Execution.resume(exec, finish_a1)
 
     finish_c1 = Command.finish_waiting(wait_c1)
-    {:succeed, result, _events} = Execution.resume(wf, state, @ctx, finish_c1)
+    {:succeed, result, _events} = Execution.resume(exec, finish_c1)
 
     assert [[_], _] = result
   end
@@ -334,7 +352,7 @@ defmodule WorkflowsTest do
 
     {:ok, wf} = Workflows.parse(@parallel_inside_map_workflow)
 
-    {:continue, state, events} = Workflows.start(wf, @ctx, db_changes)
+    {:continue, exec, events} = Workflows.start(wf, @ctx, db_changes)
 
     # Look for event to wait for one day
     wait_one_day =
@@ -346,7 +364,7 @@ defmodule WorkflowsTest do
 
     # Don't wait for one day :)
     finish_waiting_command = Command.finish_waiting(wait_one_day)
-    {:continue, state, events} = Workflows.resume(wf, state, @ctx, finish_waiting_command)
+    {:continue, exec, events} = Workflows.resume(exec, finish_waiting_command)
 
     task_started =
       events
@@ -360,7 +378,7 @@ defmodule WorkflowsTest do
 
     # Let's say the API responded with a message-id for the sent email
     complete_task_command = Command.complete_task(task_started, %{"message_id" => 123})
-    {:succeed, result, _events} = Workflows.resume(wf, state, @ctx, complete_task_command)
+    {:succeed, result, _events} = Workflows.resume(exec, complete_task_command)
     # Result is inside a list because we are mapping over all inserted users
     assert [%{"message_id" => 123}] = result
   end

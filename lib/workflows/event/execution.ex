@@ -3,5 +3,5 @@ defmodule Workflows.Event.ExecutionStarted do
 
   @type t :: struct()
 
-  defstruct [:args]
+  defstruct [:args, :ctx]
 end

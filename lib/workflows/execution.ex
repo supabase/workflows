@@ -1,65 +1,98 @@
 defmodule Workflows.Execution do
   @moduledoc false
 
-  alias Workflows.Activity
-  alias Workflows.Command
-  alias Workflows.Event
-  alias Workflows.State
-  alias Workflows.Workflow
+  alias Workflows.{Activity, Command, Event, State, Workflow}
+
+  @type t :: %__MODULE__{
+          workflow: Workflow.t(),
+          state: State.t(),
+          ctx: Activity.ctx()
+        }
 
   @type scope ::
           {:branch, pos_integer()}
           | {:item, pos_integer()}
 
   @type execution_result ::
-          {:continue, State.t(), list(Event.t())} | {:succeed, Activity.args(), list(Event.t())}
+          {:continue, t(), list(Event.t())} | {:succeed, Activity.args(), list(Event.t())}
+
+  defstruct [:workflow, :ctx, :state]
 
   @spec start(Workflow.t(), Activity.ctx(), Activity.args()) ::
           execution_result() | {:error, term()}
   def start(workflow, ctx, args) do
-    with {:ok, starting} <- Workflow.starting_activity(workflow) do
-      state = State.create(starting, args)
-      started = %Event.ExecutionStarted{args: args}
-      do_resume(workflow, state, ctx, [started])
+    with {:ok, execution} <- create(workflow, ctx, args) do
+      started = %Event.ExecutionStarted{args: args, ctx: ctx}
+      do_resume(execution, [started])
     end
   end
 
-  @spec resume(Workflow.t(), State.t(), Activity.ctx()) :: execution_result() | {:error, term()}
-  def resume(workflow, state, ctx) do
-    do_resume(workflow, state, ctx, [])
+  @spec resume(t(), Command.t()) :: execution_result() | {:error, term()}
+  def resume(execution, cmd) do
+    do_resume(execution, cmd, [])
   end
 
-  @spec resume(Workflow.t(), State.t(), Activity.ctx(), Command.t()) ::
-          execution_result() | {:error, term()}
-  def resume(workflow, state, ctx, cmd) do
-    do_resume(workflow, state, ctx, cmd, [])
+  @spec recover(Workflow.t(), list(Event.t())) :: execution_result() | {:error, term()}
+  def recover(workflow, events) do
+    do_recover(workflow, events)
   end
 
   ## Private
+  defp create(workflow, ctx, args) do
+    with {:ok, starting} <- Workflow.starting_activity(workflow) do
+      state = State.create(starting, args)
 
-  defp do_resume(workflow, state, ctx, cmd, events_acc) do
-    execute_result = Workflow.execute(workflow, state, ctx, cmd)
-    continue_resume(workflow, state, ctx, events_acc, execute_result)
+      execution = %__MODULE__{
+        workflow: workflow,
+        state: state,
+        ctx: ctx
+      }
+
+      {:ok, execution}
+    end
   end
 
-  defp do_resume(workflow, state, ctx, events_acc) do
-    execute_result = Workflow.execute(workflow, state, ctx)
-    continue_resume(workflow, state, ctx, events_acc, execute_result)
+  defp update_state(execution, new_state) do
+    %__MODULE__{execution | state: new_state}
   end
 
-  defp continue_resume(workflow, state, ctx, events_acc, execute_result) do
+  defp do_resume(execution, cmd, events_acc) do
+    execute_result = Workflow.execute(execution.workflow, execution.state, execution.ctx, cmd)
+    continue_resume(execution, events_acc, execute_result)
+  end
+
+  defp do_resume(execution, events_acc) do
+    execute_result = Workflow.execute(execution.workflow, execution.state, execution.ctx)
+    continue_resume(execution, events_acc, execute_result)
+  end
+
+  defp continue_resume(execution, events_acc, execute_result) do
     case execute_result do
       {:ok, :no_event} ->
-        {:continue, state, Enum.reverse(events_acc)}
+        {:continue, execution, Enum.reverse(events_acc)}
 
       {:ok, event} ->
-        case Workflow.project(workflow, state, event) do
+        case Workflow.project(execution.workflow, execution.state, event) do
           {:continue, new_state} ->
-            do_resume(workflow, new_state, ctx, [event | events_acc])
+            new_execution = update_state(execution, new_state)
+            do_resume(new_execution, [event | events_acc])
 
           {:succeed, result} ->
             {:succeed, result, Enum.reverse([event | events_acc])}
         end
+    end
+  end
+
+  defp do_recover(workflow, [%Event.ExecutionStarted{args: args, ctx: ctx} | events]) do
+    with {:ok, execution} <- create(workflow, ctx, args) do
+      case Workflow.project(execution.workflow, execution.state, events) do
+        {:continue, new_state} ->
+          new_execution = update_state(execution, new_state)
+          do_resume(new_execution, [])
+
+        {:succeed, result} ->
+          {:succeed, result, []}
+      end
     end
   end
 end

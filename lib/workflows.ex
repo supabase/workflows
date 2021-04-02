@@ -6,7 +6,7 @@ defmodule Workflows do
              |> String.split("<!-- MDOC -->")
              |> Enum.fetch!(1)
 
-  alias Workflows.{Activity, Command, Execution, State, Workflow}
+  alias Workflows.{Activity, Command, Event, Execution, Workflow}
 
   @doc """
   Parses a workflow definition.
@@ -42,9 +42,14 @@ defmodule Workflows do
   def start(workflow, ctx, args), do: Execution.start(workflow, ctx, args)
 
   @doc """
-  Resumes a `workflow` waiting for `cmd` to continue.
+  Resumes an `execution` waiting for `cmd` to continue.
   """
-  @spec resume(Workflow.t(), State.t(), Activity.ctx(), Command.t()) ::
-          Execution.execution_result() | {:error, term()}
-  def resume(workflow, state, ctx, cmd), do: Execution.resume(workflow, state, ctx, cmd)
+  @spec resume(Execution.t(), Command.t()) :: Execution.execution_result() | {:error, term()}
+  def resume(execution, cmd), do: Execution.resume(execution, cmd)
+
+  @doc """
+  Recovers a `workflow` execution from `events`.
+  """
+  @spec recover(Workflow.t(), list(Event.t())) :: Execution.execution_result() | {:error, term()}
+  def recover(workflow, events), do: Execution.recover(workflow, events)
 end
