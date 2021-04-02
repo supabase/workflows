@@ -332,9 +332,9 @@ defmodule WorkflowsTest do
       "commit_timestamp" => "2021-03-17T14:00:26Z"
     }
 
-    {:ok, wf} = Workflow.parse(@parallel_inside_map_workflow)
+    {:ok, wf} = Workflows.parse(@parallel_inside_map_workflow)
 
-    {:continue, state, events} = Execution.start(wf, @ctx, db_changes)
+    {:continue, state, events} = Workflows.start(wf, @ctx, db_changes)
 
     # Look for event to wait for one day
     wait_one_day =
@@ -346,7 +346,7 @@ defmodule WorkflowsTest do
 
     # Don't wait for one day :)
     finish_waiting_command = Command.finish_waiting(wait_one_day)
-    {:continue, state, events} = Execution.resume(wf, state, @ctx, finish_waiting_command)
+    {:continue, state, events} = Workflows.resume(wf, state, @ctx, finish_waiting_command)
 
     task_started =
       events
@@ -360,7 +360,7 @@ defmodule WorkflowsTest do
 
     # Let's say the API responded with a message-id for the sent email
     complete_task_command = Command.complete_task(task_started, %{"message_id" => 123})
-    {:succeed, result, _events} = Execution.resume(wf, state, @ctx, complete_task_command)
+    {:succeed, result, _events} = Workflows.resume(wf, state, @ctx, complete_task_command)
     # Result is inside a list because we are mapping over all inserted users
     assert [%{"message_id" => 123}] = result
   end

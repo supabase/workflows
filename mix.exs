@@ -6,6 +6,7 @@ defmodule Workflows.MixProject do
 
   def project do
     [
+      name: "Workflows",
       app: :workflows,
       version: @version,
       elixir: "~> 1.9",
@@ -57,12 +58,11 @@ defmodule Workflows.MixProject do
 
   defp docs() do
     [
-      main: "readme",
-      name: "Workflows",
+      main: "Workflows",
       source_ref: "v#{@version}",
       canonical: "http://hexdocs.pm/workflows",
       source_url: @source_url,
-      extras: ["README.md", "CHANGELOG.md", "LICENSE"]
+      extras: ["CHANGELOG.md", "LICENSE"]
     ]
   end
 end
