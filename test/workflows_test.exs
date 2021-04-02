@@ -158,6 +158,54 @@ defmodule WorkflowsTest do
     }
   }
 
+  @parallel_inside_map_workflow %{
+    "StartAt" => "SendEmailsToUsers",
+    "States" => %{
+      "SendEmailsToUsers" => %{
+        "Type" => "Map",
+        "End" => true,
+        "InputPath" => "$.changes",
+        "Iterator" => %{
+          "StartAt" => "CheckInsert",
+          "States" => %{
+            "CheckInsert" => %{
+              "Type" => "Choice",
+              "Default" => "Complete",
+              "Choices" => [
+                %{
+                  "Variable" => "$.type",
+                  "StringEquals" => "INSERT",
+                  "Next" => "WaitOneDay"
+                }
+              ]
+            },
+            "WaitOneDay" => %{
+              "Type" => "Wait",
+              "Next" => "SendEmail",
+              "Seconds" => 86400
+            },
+            "SendEmail" => %{
+              "Type" => "Task",
+              "Next" => "Complete",
+              "Resource" => "send-templated-email",
+              "Parameters" => %{
+                "api_key" => "my-api-key",
+                "template_id" => "welcome-email",
+                "payload" => %{
+                  "name.$" => "$.record.name",
+                  "email.$" => "$.record.email"
+                }
+              }
+            },
+            "Complete" => %{
+              "Type" => "Succeed"
+            }
+          }
+        }
+      }
+    }
+  }
+
   test "simple workflow" do
     {:ok, wf} = Workflow.parse(@simple_workflow)
 
@@ -244,5 +292,76 @@ defmodule WorkflowsTest do
     {:succeed, result, _events} = Execution.resume(wf, state, @ctx, finish_c1)
 
     assert [[_], _] = result
+  end
+
+  test "parallel inside map workflow" do
+    db_changes = %{
+      "changes" => [
+        %{
+          "columns" => [
+            %{
+              "flags" => ["key"],
+              "name" => "id",
+              "type" => "int8",
+              "type_modifier" => 4_294_967_295
+            },
+            %{
+              "flags" => [],
+              "name" => "name",
+              "type" => "text",
+              "type_modifier" => 4_294_967_295
+            },
+            %{
+              "flags" => [],
+              "name" => "email",
+              "type" => "text",
+              "type_modifier" => 4_294_967_295
+            }
+          ],
+          "commit_timestamp" => "2021-03-17T14:00:26Z",
+          "record" => %{
+            "id" => "101492",
+            "name" => "Alfred",
+            "email" => "alfred@example.org"
+          },
+          "schema" => "public",
+          "table" => "users",
+          "type" => "INSERT"
+        }
+      ],
+      "commit_timestamp" => "2021-03-17T14:00:26Z"
+    }
+
+    {:ok, wf} = Workflow.parse(@parallel_inside_map_workflow)
+
+    {:continue, state, events} = Execution.start(wf, @ctx, db_changes)
+
+    # Look for event to wait for one day
+    wait_one_day =
+      events
+      |> Enum.find(fn
+        %Event.WaitStarted{activity: "WaitOneDay"} -> true
+        _ -> false
+      end)
+
+    # Don't wait for one day :)
+    finish_waiting_command = Command.finish_waiting(wait_one_day)
+    {:continue, state, events} = Execution.resume(wf, state, @ctx, finish_waiting_command)
+
+    task_started =
+      events
+      |> Enum.find(fn
+        %Event.TaskStarted{activity: "SendEmail"} -> true
+        _ -> false
+      end)
+
+    # Check that the arguments to the task are correct
+    assert %{"email" => "alfred@example.org", "name" => "Alfred"} = task_started.args["payload"]
+
+    # Let's say the API responded with a message-id for the sent email
+    complete_task_command = Command.complete_task(task_started, %{"message_id" => 123})
+    {:succeed, result, _events} = Execution.resume(wf, state, @ctx, complete_task_command)
+    # Result is inside a list because we are mapping over all inserted users
+    assert [%{"message_id" => 123}] = result
   end
 end

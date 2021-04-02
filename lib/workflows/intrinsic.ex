@@ -16,7 +16,8 @@ defmodule Workflows.Intrinsic do
     {:error, :not_implemented}
   end
 
-  @spec apply(String.t(), Activity.ctx(), Activity.args()) :: {:ok, Activity.args()} | {:error, term()}
+  @spec apply(String.t(), Activity.ctx(), Activity.args()) ::
+          {:ok, Activity.args()} | {:error, term()}
   def apply(_definition, _ctx, _args) do
     {:error, :not_implemented}
   end
