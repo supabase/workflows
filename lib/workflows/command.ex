@@ -1,10 +1,7 @@
 defmodule Workflows.Command do
   @moduledoc false
 
-  alias Workflows.Activity
-  alias Workflows.Command
-  alias Workflows.Event
-  alias Workflows.Execution
+  alias Workflows.{Activity, Command, Event, Error, Execution}
 
   @type t :: struct()
 
@@ -30,6 +27,15 @@ defmodule Workflows.Command do
       activity: event.activity,
       scope: event.scope,
       result: result
+    }
+  end
+
+  @spec fail_task(Event.TaskStarted.t(), Error.t()) :: Command.FailTask.t()
+  def fail_task(%Event.TaskStarted{} = event, error) do
+    %Command.FailTask{
+      activity: event.activity,
+      scope: event.scope,
+      error: error,
     }
   end
 end

@@ -1,11 +1,7 @@
 defmodule Workflows.State do
   @moduledoc false
 
-  alias Workflows.Activity
-  alias Workflows.Command
-  alias Workflows.Event
-  alias Workflows.State
-  alias Workflows.StateUtil
+  alias Workflows.{Activity, Command, Error, Event, State, StateUtil}
 
   @type t ::
           State.Choice.t()
@@ -27,6 +23,7 @@ defmodule Workflows.State do
           {:stay, t()}
           | {:transition, Activity.transition(), Activity.args()}
           | {:succeed, Activity.args()}
+	  | {:fail, Error.t()}
 
   @spec create(Activity.t(), Activity.args()) :: t()
   def create(activity, args) do
@@ -44,7 +41,7 @@ defmodule Workflows.State do
   end
 
   @spec project(t(), Activity.t(), Event.t()) :: project_result()
-  def(project(state, activity, event)) do
+  def project(state, activity, event) do
     StateUtil.project(state, activity, event)
   end
 
