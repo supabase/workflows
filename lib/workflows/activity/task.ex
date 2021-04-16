@@ -132,7 +132,7 @@ defmodule Workflows.Activity.Task do
       resource: activity.resource,
       args: args,
       error: error,
-      retry_count: retry_count,
+      retry_count: retry_count
     }
 
     {:ok, event}
@@ -142,7 +142,7 @@ defmodule Workflows.Activity.Task do
     event = %Event.TaskFailed{
       activity: activity.name,
       scope: [],
-      error: error,
+      error: error
     }
 
     {:ok, event}

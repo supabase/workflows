@@ -35,7 +35,7 @@ defmodule Workflows.Command do
     %Command.FailTask{
       activity: event.activity,
       scope: event.scope,
-      error: error,
+      error: error
     }
   end
 end

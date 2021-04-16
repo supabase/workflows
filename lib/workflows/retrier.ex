@@ -61,7 +61,7 @@ defmodule Workflows.Retrier do
       error_equals: errors,
       interval_seconds: interval_seconds,
       max_attempts: max_attempts,
-      backoff_rate: backoff_rate,
+      backoff_rate: backoff_rate
     }
 
     {:ok, retrier}

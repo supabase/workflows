@@ -51,14 +51,16 @@ defmodule Workflows.State.Task do
        ) do
     case state.inner do
       {:waiting_response, _state_args, effective_args, retriers_state} ->
-	case match_retriers(retriers_state, activity.retry, cmd.error) do
-	  {:retry, retry_count} ->
-	    Activity.Task.retry_task(activity, ctx, effective_args, cmd.error, retry_count)
-	  :max_attempts_reached ->
-	    Activity.Task.fail_task(activity, ctx, cmd.error)
-	  :no_match ->
-	    nil
-	end
+        case match_retriers(retriers_state, activity.retry, cmd.error) do
+          {:retry, retry_count} ->
+            Activity.Task.retry_task(activity, ctx, effective_args, cmd.error, retry_count)
+
+          :max_attempts_reached ->
+            Activity.Task.fail_task(activity, ctx, cmd.error)
+
+          :no_match ->
+            nil
+        end
 
       _ ->
         {:error, :invalid_command, cmd}
@@ -83,8 +85,13 @@ defmodule Workflows.State.Task do
   defp do_project(%State.Task{} = state, activity, %Event.TaskStarted{} = event) do
     case state.inner do
       {:running, state_args, effective_args} ->
-	retriers_state = Enum.map(activity.retry, fn _ -> 0 end)
-        new_state = %State.Task{state | inner: {:waiting_response, state_args, effective_args, retriers_state}}
+        retriers_state = Enum.map(activity.retry, fn _ -> 0 end)
+
+        new_state = %State.Task{
+          state
+          | inner: {:waiting_response, state_args, effective_args, retriers_state}
+        }
+
         {:stay, new_state}
 
       _ ->
@@ -106,14 +113,15 @@ defmodule Workflows.State.Task do
   defp do_project(%State.Task{} = state, activity, %Event.TaskRetried{} = event) do
     case state.inner do
       {:waiting_response, state_args, effective_args, retriers_state} ->
-	case update_retriers_state(retriers_state, activity.retry, event.error, []) do
-	  {:ok, new_retriers_state} ->
-	    new_inner = {:waiting_response, state_args, effective_args, new_retriers_state}
+        case update_retriers_state(retriers_state, activity.retry, event.error, []) do
+          {:ok, new_retriers_state} ->
+            new_inner = {:waiting_response, state_args, effective_args, new_retriers_state}
             new_state = %State.Task{state | inner: new_inner}
             {:stay, new_state}
-	  {:error, _reason} ->
-	    {:error, :invalid_event, event}
-	end
+
+          {:error, _reason} ->
+            {:error, :invalid_event, event}
+        end
 
       _ ->
         {:error, :invalid_event, event}
@@ -123,14 +131,16 @@ defmodule Workflows.State.Task do
   defp do_project(%State.Task{} = state, activity, %Event.TaskFailed{} = event) do
     case state.inner do
       {:waiting_response, _state_args, _effective_args, _retriers_state} ->
-	case Enum.find(activity.catch, fn c -> Catcher.matches?(c, event.error) end) do
-	  nil ->
-	    {:fail, event.error}
-	  catcher ->
-	    # TODO: add result path here
-	    error = %{"Name" => event.error.name, "Cause" => event.error.cause}
-	    {:transition, {:next, catcher.next}, error}
-	end
+        case Enum.find(activity.catch, fn c -> Catcher.matches?(c, event.error) end) do
+          nil ->
+            {:fail, event.error}
+
+          catcher ->
+            # TODO: add result path here
+            error = %{"Name" => event.error.name, "Cause" => event.error.cause}
+            {:transition, {:next, catcher.next}, error}
+        end
+
       _ ->
         {:error, :invalid_event, event}
     end
@@ -157,9 +167,9 @@ defmodule Workflows.State.Task do
   defp match_retriers([state | states], [retrier | retriers], error) do
     if Retrier.matches?(retrier, error) do
       if state < retrier.max_attempts do
-	{:retry, state}
+        {:retry, state}
       else
-	:max_attempts_reached
+        :max_attempts_reached
       end
     else
       match_retriers(states, retriers, error)

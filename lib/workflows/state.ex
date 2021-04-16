@@ -23,7 +23,7 @@ defmodule Workflows.State do
           {:stay, t()}
           | {:transition, Activity.transition(), Activity.args()}
           | {:succeed, Activity.args()}
-	  | {:fail, Error.t()}
+          | {:fail, Error.t()}
 
   @spec create(Activity.t(), Activity.args()) :: t()
   def create(activity, args) do
