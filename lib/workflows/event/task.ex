@@ -27,7 +27,7 @@ defmodule Workflows.Event.TaskRetried do
 
   @type t :: struct()
 
-  defstruct [:activity, :scope, :resource, :args, :error, :retry_count]
+  defstruct [:activity, :scope, :resource, :args, :error, :wait]
 end
 
 defmodule Workflows.Event.TaskSucceeded do

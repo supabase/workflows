@@ -9,7 +9,12 @@ defmodule Workflows.Retrier do
 
   alias Workflows.Error
 
-  @type t :: term()
+  @type t :: %__MODULE__{
+    error_equals: String.t(),
+    interval_seconds: pos_integer(),
+    max_attempts: non_neg_integer(),
+    backoff_rate: float(),
+  }
 
   defstruct [:error_equals, :interval_seconds, :max_attempts, :backoff_rate]
 
@@ -35,6 +40,11 @@ defmodule Workflows.Retrier do
   @spec matches?(t(), Error.t()) :: boolean()
   def matches?(retrier, error) do
     Enum.any?(retrier.error_equals, fn ee -> ee == "States.ALL" || ee == error.name end)
+  end
+
+  @spec wait_seconds(t(), pos_integer()) :: float()
+  def wait_seconds(retrier, retry_count) do
+    retrier.interval_seconds + retry_count * retrier.backoff_rate
   end
 
   ## Private

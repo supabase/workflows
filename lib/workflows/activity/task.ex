@@ -125,14 +125,14 @@ defmodule Workflows.Activity.Task do
     {:ok, event}
   end
 
-  def retry_task(activity, _ctx, args, error, retry_count) do
+  def retry_task(activity, _ctx, args, error, wait) do
     event = %Event.TaskRetried{
       activity: activity.name,
       scope: [],
       resource: activity.resource,
       args: args,
       error: error,
-      retry_count: retry_count
+      wait: wait
     }
 
     {:ok, event}

@@ -83,18 +83,18 @@ defmodule Workflows.State.TaskTest do
     error_b = Error.create("ErrorB", "Something went wrong")
     fail_task = Command.fail_task(started, error_b)
     {:ok, retried} = State.execute(new_state, activity, @ctx, fail_task)
-    assert %Event.TaskRetried{retry_count: 0} = retried
+    assert %Event.TaskRetried{wait: 1} = retried
     {:stay, new_state} = State.project(new_state, activity, retried)
 
     error_c = Error.create("ErrorC", "Something went wrong")
     fail_task = Command.fail_task(started, error_c)
     {:ok, retried} = State.execute(new_state, activity, @ctx, fail_task)
-    assert %Event.TaskRetried{retry_count: 0} = retried
+    assert %Event.TaskRetried{wait: 5.0} = retried
     {:stay, new_state} = State.project(new_state, activity, retried)
 
     fail_task = Command.fail_task(started, error_b)
     {:ok, retried} = State.execute(new_state, activity, @ctx, fail_task)
-    assert %Event.TaskRetried{retry_count: 1} = retried
+    assert %Event.TaskRetried{wait: 3} = retried
     {:stay, new_state} = State.project(new_state, activity, retried)
 
     {:ok, failed} = State.execute(new_state, activity, @ctx, fail_task)
@@ -120,13 +120,13 @@ defmodule Workflows.State.TaskTest do
     error_b = Error.create("ErrorB", "Something went wrong")
     fail_task = Command.fail_task(started, error_b)
     {:ok, retried} = State.execute(new_state, activity, @ctx, fail_task)
-    assert %Event.TaskRetried{retry_count: 0} = retried
+    assert %Event.TaskRetried{} = retried
     {:stay, new_state} = State.project(new_state, activity, retried)
 
     error_c = Error.create("ErrorC", "Something went wrong")
     fail_task = Command.fail_task(started, error_c)
     {:ok, retried} = State.execute(new_state, activity, @ctx, fail_task)
-    assert %Event.TaskRetried{retry_count: 0} = retried
+    assert %Event.TaskRetried{} = retried
     {:stay, new_state} = State.project(new_state, activity, retried)
 
     fail_task = Command.fail_task(started, error_c)
