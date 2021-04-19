@@ -22,6 +22,14 @@ defmodule Workflows.Event.TaskStarted do
   defstruct [:activity, :scope, :resource, :args]
 end
 
+defmodule Workflows.Event.TaskRetried do
+  @moduledoc false
+
+  @type t :: struct()
+
+  defstruct [:activity, :scope, :resource, :args, :error, :wait]
+end
+
 defmodule Workflows.Event.TaskSucceeded do
   @moduledoc false
 

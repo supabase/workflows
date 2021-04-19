@@ -125,6 +125,29 @@ defmodule Workflows.Activity.Task do
     {:ok, event}
   end
 
+  def retry_task(activity, _ctx, args, error, wait) do
+    event = %Event.TaskRetried{
+      activity: activity.name,
+      scope: [],
+      resource: activity.resource,
+      args: args,
+      error: error,
+      wait: wait
+    }
+
+    {:ok, event}
+  end
+
+  def fail_task(activity, _ctx, error) do
+    event = %Event.TaskFailed{
+      activity: activity.name,
+      scope: [],
+      error: error
+    }
+
+    {:ok, event}
+  end
+
   ## Private
 
   defp parse_resource(%{"Resource" => resource}) do
