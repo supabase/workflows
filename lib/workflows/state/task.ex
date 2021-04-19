@@ -53,7 +53,7 @@ defmodule Workflows.State.Task do
       {:waiting_response, _state_args, effective_args, retriers_state} ->
         case match_retriers(retriers_state, activity.retry, cmd.error) do
           {:retry, retrier, retry_count} ->
-	    wait = Retrier.wait_seconds(retrier, retry_count)
+            wait = Retrier.wait_seconds(retrier, retry_count)
             Activity.Task.retry_task(activity, ctx, effective_args, cmd.error, wait)
 
           :max_attempts_reached ->

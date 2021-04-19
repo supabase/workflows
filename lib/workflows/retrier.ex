@@ -10,11 +10,11 @@ defmodule Workflows.Retrier do
   alias Workflows.Error
 
   @type t :: %__MODULE__{
-    error_equals: String.t(),
-    interval_seconds: pos_integer(),
-    max_attempts: non_neg_integer(),
-    backoff_rate: float(),
-  }
+          error_equals: String.t(),
+          interval_seconds: pos_integer(),
+          max_attempts: non_neg_integer(),
+          backoff_rate: float()
+        }
 
   defstruct [:error_equals, :interval_seconds, :max_attempts, :backoff_rate]
 
